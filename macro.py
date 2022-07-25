@@ -57,10 +57,10 @@ def cleaner(serie:str, resam:str=None, operations:list=None):
 #%% Exportaciones de los principales productos chilenos
 
 # Solicitar los datos
-exportaciones = cleaner('F068.B1.FLU.Z.0.C.N.Z.Z.Z.Z.6.0.M', resam='Q', operations=['sum'])
-exp_mineras = cleaner('F068.B1.FLU.A.0.C.N.Z.Z.Z.Z.6.0.M', resam='Q', operations=['sum'])
-exp_agro = cleaner('F068.B1.FLU.B.0.C.N.Z.Z.Z.Z.6.0.M', resam='Q', operations=['sum'])
-exp_ind = cleaner('F068.B1.FLU.C.0.C.N.Z.Z.Z.Z.6.0.M', resam='Q', operations=['sum'])
+exportaciones = cleaner('F068.B1.FLU.Z.0.C.N.Z.Z.Z.Z.6.0.M').rolling(window=12).sum()
+exp_mineras = cleaner('F068.B1.FLU.A.0.C.N.Z.Z.Z.Z.6.0.M').rolling(window=12).sum()
+exp_agro = cleaner('F068.B1.FLU.B.0.C.N.Z.Z.Z.Z.6.0.M').rolling(window=12).sum()
+exp_ind = cleaner('F068.B1.FLU.C.0.C.N.Z.Z.Z.Z.6.0.M').rolling(window=12).sum()
 
 # Unir todo
 exportaciones = exportaciones.join(exp_mineras, rsuffix='_min').join(exp_agro, rsuffix='_agro').join(exp_ind, rsuffix='_ind')
@@ -79,8 +79,8 @@ ax.stackplot(
     exportaciones_porcion['industriales'],
     alpha=0.5
     )
-fig.suptitle('Desglose de las exportaciones chilenas', fontweight='bold')
-plt.title('Categorias principales, periodicidad trimestral')
+fig.suptitle('Proporción histórica de las principales categorías de exportaciones chilenas', fontweight='bold')
+plt.title('Seguimiendo anual (TTM)')
 ax.set_ylabel('Porcentaje respecto a las exportaciones totales (%)')
 ax.legend(['Minería', 'Agropecuario-silvícola y pesquero', 'Industriales'], 
           loc='lower left')
