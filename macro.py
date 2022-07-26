@@ -331,7 +331,7 @@ cerezas = cleaner('F068.B1.FLU.B17.0.C.N.Z.Z.Z.Z.6.0.M')
 paltas = cleaner('F068.B1.FLU.B18.0.C.N.Z.Z.Z.Z.6.0.M')
 
 sector_fruticola = uvas.join(manzanas, rsuffix='_1').join(peras, rsuffix='_2').join(arandanos, rsuffix='_3').join(kiwis, rsuffix='_4').join(ciruelas, rsuffix='_5').join(cerezas, rsuffix='_6').join(paltas, rsuffix='_7')
-sector_fruticola.columns = ['Uvas', 'Manzanas', 'Peras', 'Arandanos', 'Kiwis', 'Ciruelas', 'Cerezas', 'Paltas']
+sector_fruticola.columns = ['Uvas', 'Manzanas', 'Peras', 'Arandanos', 'Kiwis', 'Ciruelas', 'Cerezas', 'Paltas'] 
 
 # Grafico pareto agropecuario fruticola
 sector_fruticola = pd.DataFrame(
@@ -367,4 +367,145 @@ plt.title('Último dato reportado')
 
 plt.show()
 
+from matplotlib.patches import ConnectionPatch
+
+# Seleccionando los datos para el pie chart
+
+
+# make figure and assign axis objects
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 5))
+fig.subplots_adjust(wspace=0)
+
+# pie chart parameters
+overall_ratios = 
+labels = ['Approve', 'Disapprove', 'Undecided']
+explode = [0.1, 0, 0]
+# rotate so that first wedge is split by the x-axis
+angle = -180 * overall_ratios[0]
+wedges, *_ = ax1.pie(overall_ratios, autopct='%1.1f%%', startangle=angle,
+                     labels=labels, explode=explode)
+
+# bar chart parameters
+age_ratios = [.33, .54, .07, .06]
+age_labels = ['Under 35', '35-49', '50-65', 'Over 65']
+bottom = 1
+width = .2
+
+# Adding from the top matches the legend.
+for j, (height, label) in enumerate(reversed([*zip(age_ratios, age_labels)])):
+    bottom -= height
+    bc = ax2.bar(0, height, width, bottom=bottom, color='C0', label=label,
+                 alpha=0.1 + 0.25 * j)
+    ax2.bar_label(bc, labels=[f"{height:.0%}"], label_type='center')
+
+ax2.set_title('Age of approvers')
+ax2.legend()
+ax2.axis('off')
+ax2.set_xlim(- 2.5 * width, 2.5 * width)
+
+# use ConnectionPatch to draw lines between the two plots
+theta1, theta2 = wedges[0].theta1, wedges[0].theta2
+center, r = wedges[0].center, wedges[0].r
+bar_height = sum(age_ratios)
+
+# draw top connecting line
+x = r * np.cos(np.pi / 180 * theta2) + center[0]
+y = r * np.sin(np.pi / 180 * theta2) + center[1]
+con = ConnectionPatch(xyA=(-width / 2, bar_height), coordsA=ax2.transData,
+                      xyB=(x, y), coordsB=ax1.transData)
+con.set_color([0, 0, 0])
+con.set_linewidth(4)
+ax2.add_artist(con)
+
+# draw bottom connecting line
+x = r * np.cos(np.pi / 180 * theta1) + center[0]
+y = r * np.sin(np.pi / 180 * theta1) + center[1]
+con = ConnectionPatch(xyA=(-width / 2, 0), coordsA=ax2.transData,
+                      xyB=(x, y), coordsB=ax1.transData)
+con.set_color([0, 0, 0])
+ax2.add_artist(con)
+con.set_linewidth(4)
+
+plt.show()
+
 #%% Categoria: Industriales
+
+alimentos = cleaner('F068.B1.FLU.C1.0.C.N.Z.Z.Z.Z.6.0.M')
+bebidas = cleaner('F068.B1.FLU.C2.0.C.N.Z.Z.Z.Z.6.0.M')
+forestal = cleaner('F068.B1.FLU.C3.0.C.N.Z.Z.Z.Z.6.0.M')
+celulosa = cleaner('F068.B1.FLU.C4.0.C.N.Z.Z.Z.Z.6.0.M')
+quimicos = cleaner('F068.B1.FLU.C5.0.C.N.Z.Z.Z.Z.6.0.M')
+metalica = cleaner('F068.B1.FLU.C6.0.C.N.Z.Z.Z.Z.6.0.M')
+maquinaria = cleaner('F068.B1.FLU.C7.0.C.N.Z.Z.Z.Z.6.0.M')
+otros = cleaner('F068.B1.FLU.C9.0.C.N.Z.Z.Z.Z.6.0.M')
+
+industriales = exp_ind.join(alimentos, rsuffix='_1').join(bebidas, rsuffix='_2').join(forestal, rsuffix='_3').join(celulosa, rsuffix='_4').join(quimicos, rsuffix='_5').join(metalica, rsuffix='_6').join(maquinaria, rsuffix='_7').join(otros, rsuffix='_8')
+industriales.columns = ['total_industrial_fob', 'Alimentos', 'Bebidas\ny tabaco', 'Forestal y\nmuebles de\nmadera', 'Celulosa, papel\ny otros', 'Productos\nquímicos', 'Industria metálica\nbasica', 'Maquinaria y\nequipos', 'Otros']
+industriales_proporcion = industriales.divide(industriales['total_industrial_fob'], axis=0) * 100
+
+# Grafico pareto industriales
+pareto_industriales = pd.DataFrame(
+    data=industriales.iloc[-1, 1:].values,
+    columns=['count'],
+    index=industriales.columns[1:]
+    )
+
+# ordenarlas de manera descendente
+pareto_industriales = pareto_industriales.sort_values(by='count', ascending=False)
+
+# añadir una columna del porcentaje acumulado
+pareto_industriales['cumperc'] = pareto_industriales['count'].cumsum() / pareto_industriales['count'].sum() * 100
+
+# Crear el grafico
+fig, ax = plt.subplots(figsize=(10, 5))
+ax2 = ax.twinx()
+
+ax.bar(pareto_industriales.index, pareto_industriales['count'], color='tab:blue')
+#añadir una linea de porcentaje acumulado
+ax2.plot(pareto_industriales.index, pareto_industriales['cumperc'], color='tab:orange', marker='D', ms=4)
+ax2.axhline(y=80, color='tab:orange', linestyle='dashed')
+ax2.yaxis.set_major_formatter(PercentFormatter())
+# especificar el color de los ejes
+ax.tick_params(axis='y', colors='tab:blue')
+ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
+ax2.tick_params(axis='y', colors='tab:orange')
+ax2.set_ylabel('Porcentaje respecto al total (%)', color='tab:orange')
+ax.tick_params(axis='x', labelrotation=45)
+
+fig.suptitle('Gráfico de Pareto de las exportaciones industriales chilenas', fontweight='bold')
+plt.title('Último dato reportado')
+
+plt.show()
+
+fig, ax = plt.subplots(figsize=(10, 5))
+
+ax.stackplot(
+    industriales_proporcion.index,
+    industriales_proporcion['Alimentos'],
+    industriales_proporcion['Bebidas\ny tabaco'],
+    industriales_proporcion['Forestal y\nmuebles de\nmadera'],
+    industriales_proporcion['Celulosa, papel\ny otros'],
+    industriales_proporcion['Productos\nquímicos'],
+    industriales_proporcion['Industria metálica\nbasica'],
+    industriales_proporcion['Maquinaria y\nequipos'],
+    industriales_proporcion['Otros'],
+    alpha=0.5
+    )
+fig.suptitle('Proporción histórica de las exportaciones industriales chilenas', fontweight='bold')
+plt.title('Seguimiendo anual (TTM)')
+ax.set_ylabel('Porcentaje respecto a las exportaciones industriales totales (%)')
+ax.legend(['Aliementos', 'Bebidas y tabaco', 'Forestal y muebles de madera',
+           'Celulosa, papel y otros', 'Productos químicos', 'Industria metálica basica',
+           'Maquinaria y equipos', 'Otros'], loc='upper left')
+ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+
+ax.text(0.15, -0.12,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+plt.show()
