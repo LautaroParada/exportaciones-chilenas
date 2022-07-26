@@ -372,7 +372,7 @@ from matplotlib.patches import ConnectionPatch
 # Seleccionando los datos para el pie chart
 
 # make figure and assign axis objects
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 5))
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
 fig.subplots_adjust(wspace=0)
 
 # pie chart parameters
@@ -399,8 +399,8 @@ width = .2
 for j, (height, label) in enumerate(reversed([*zip(age_ratios, age_labels)])):
     bottom -= height
     # ARREGLAR A UN DEGRADE
-    bc = ax2.bar(0, height, width, bottom=bottom, color='C0', label=label, alpha=0.1 + (1/len(age_labels)) * j)
-    ax2.bar_label(bc, labels=[f"{round(height, 2)}%"], label_type='center')
+    bc = ax2.bar(0, height, width, bottom=bottom, color='tab:purple', label=label, alpha=0.1 + (1/len(age_labels)) * j)
+    ax2.bar_label(bc, labels=[f"{round(height, 1)}%"], label_type='center')
 
 ax2.set_title('Desglose exportaciones\nsector Frutícula')
 ax2.legend()
@@ -429,6 +429,15 @@ con = ConnectionPatch(xyA=(-width / 2, -bar_height+1), coordsA=ax2.transData,
 con.set_color([0, 0, 0])
 ax2.add_artist(con)
 con.set_linewidth(4)
+
+ax1.text(0.15, -0.12,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
 
 plt.show()
 
