@@ -203,9 +203,39 @@ ax.stackplot(
     alpha=0.5
     )
 fig.suptitle('Proporción histórica de las exportaciones mineras chilenas', fontweight='bold')
-plt.title('Seguimiendo anual (TTM)')
+plt.title('Seguimiendo anual (TTM), Sin el cobre.')
 ax.set_ylabel('Porcentaje respecto a las exportaciones mineras totales (%)')
 ax.legend(mineras.columns[2:].to_list(), loc='upper left')
+ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+
+ax.text(0.15, -0.12,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+plt.show()
+
+#Mineras de cobre
+mineras_cobre = exp_mineras.join(catodos, lsuffix='_fob', rsuffix='_1').join(concentrado, rsuffix='_2')
+mineras_cobre.columns = ['mineras_fob', 'catodos', 'concentrados']
+mineras_cobre = mineras_cobre.divide(mineras_cobre['mineras_fob'], axis=0) * 100
+
+fig, ax = plt.subplots(figsize=(10, 5))
+
+ax.stackplot(
+    mineras_cobre.index,
+    mineras_cobre['catodos'],
+    mineras_cobre['concentrados'],
+    alpha=0.5
+    )
+fig.suptitle('Proporción histórica de las exportaciones de Cobre', fontweight='bold')
+plt.title('Seguimiento anual, solo subcomponentes del Cobre')
+ax.set_ylabel('Porcentaje respecto a las exportaciones de cobre (%)')
+ax.legend(['Catodos', 'Concentrados'], loc='lower left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
 ax.text(0.15, -0.12,  
