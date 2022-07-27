@@ -66,6 +66,43 @@ def cleaner(serie:str, rolling_:bool=True, window:int=12, operacion_:str='sum'):
 
 #%% Exportaciones de los principales productos chilenos
 
+# Exportaciones de bienes FOB (millones de dólares)
+exportaciones_bienes = cleaner('F068.B1.FLU.Z.0.C.N.Z.Z.Z.Z.6.0.M', rolling_=False).resample('Q').sum().rolling(window=4).sum()
+# Servicios, exportaciones (millones de dólares)
+exportaciones_servicios = cleaner('F068.B2.FLU.Z.0.C.N.Z.T.Z.Z.6.0.T', window=4).to_period('Q').to_timestamp('Q')
+
+comercio = exportaciones_bienes.join(exportaciones_servicios, rsuffix='_1')
+comercio.columns = ['bienes', 'servicios']
+comercio.fillna(method='ffill', inplace=True)
+comercio['total_exportaciones'] = comercio['bienes'] + comercio['servicios']
+comercio = comercio.divide(comercio['total_exportaciones'], axis=0) * 100
+
+fig, ax = plt.subplots(figsize=(10, 5))
+
+ax.stackplot(
+    comercio.index,
+    comercio['bienes'],
+    comercio['servicios'],
+    alpha=0.5
+    )
+fig.suptitle('Balanza de pagos: Composición exportaciones totales', fontweight='bold')
+plt.title('Seguimiendo anual (TTM)')
+ax.set_ylabel('Porcentaje respecto a las exportaciones totales (%)')
+ax.legend(['Bienes', 'Servicios'], loc='lower left')
+ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+
+ax.text(0.15, -0.12,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+plt.show()
+
+
 # Solicitar los datos
 exportaciones = cleaner('F068.B1.FLU.Z.0.C.N.Z.Z.Z.Z.6.0.M')
 exp_mineras = cleaner('F068.B1.FLU.A.0.C.N.Z.Z.Z.Z.6.0.M')
@@ -106,10 +143,10 @@ ax2.yaxis.set_major_formatter(PercentFormatter())
 ax.tick_params(axis='y', colors='tab:blue')
 ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
 ax2.tick_params(axis='y', colors='tab:orange')
-ax2.set_ylabel('Porcentaje respecto al total (%)', color='tab:orange')
+ax2.set_ylabel('Porcentaje respecto al total de exportaciones de bienes (%)', color='tab:orange')
 ax.tick_params(axis='x', labelrotation=45)
 
-fig.suptitle('Gráfico de Pareto de las exportaciones chilenas totales', fontweight='bold')
+fig.suptitle('Gráfico de Pareto de las exportaciones de bienes chilenos', fontweight='bold')
 plt.title('Último dato reportado')
 
 plt.show()
@@ -123,9 +160,9 @@ ax.stackplot(
     exportaciones_porcion['Industriales'],
     alpha=0.5
     )
-fig.suptitle('Proporción histórica de las principales categorías de exportaciones chilenas', fontweight='bold')
+fig.suptitle('Proporción histórica de las principales categorías de exportaciones de bienes chilenos', fontweight='bold')
 plt.title('Seguimiendo anual (TTM)')
-ax.set_ylabel('Porcentaje respecto a las exportaciones totales (%)')
+ax.set_ylabel('Porcentaje respecto a las exportaciones de bienes (%)')
 ax.legend(['Minería', 'Agropecuario-silvícola y pesquero', 'Industriales'], loc='lower left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
