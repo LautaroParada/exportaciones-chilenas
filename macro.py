@@ -220,7 +220,7 @@ ax2.yaxis.set_major_formatter(PercentFormatter())
 ax.tick_params(axis='y', colors='tab:blue')
 ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
 ax2.tick_params(axis='y', colors='tab:orange')
-ax2.set_ylabel('Porcentaje respecto al total (%)', color='tab:orange')
+ax2.set_ylabel('Porcentaje respecto al total de exportaciones mineras (%)', color='tab:orange')
 ax.tick_params(axis='x', labelrotation=45)
 
 fig.suptitle('Gráfico de Pareto de las exportaciones mineras chilenas', fontweight='bold')
@@ -242,7 +242,7 @@ ax.stackplot(
     )
 fig.suptitle('Proporción histórica de las exportaciones mineras chilenas', fontweight='bold')
 plt.title('Seguimiendo anual (TTM), Sin el cobre.')
-ax.set_ylabel('Porcentaje respecto a las exportaciones mineras totales (%)')
+ax.set_ylabel('Porcentaje respecto a las exportaciones mineras (%)')
 ax.legend(mineras.columns[2:].to_list(), loc='upper left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
@@ -272,7 +272,7 @@ ax.stackplot(
     )
 fig.suptitle('Proporción histórica de las exportaciones de Cobre', fontweight='bold')
 plt.title('Seguimiento anual, solo subcomponentes del Cobre')
-ax.set_ylabel('Porcentaje respecto a las exportaciones de cobre (%)')
+ax.set_ylabel('Porcentaje respecto a las exportaciones de Cobre (%)')
 ax.legend(['Catodos', 'Concentrados'], loc='lower left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
