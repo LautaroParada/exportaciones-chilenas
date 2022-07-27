@@ -559,3 +559,61 @@ ax.text(0.15, -0.12,
          bbox=dict(facecolor='tab:gray', alpha=0.5))
 
 plt.show()
+
+# Desglose categoria alimentos
+harina_pescado = cleaner('F068.B1.FLU.C11.0.C.N.Z.Z.Z.Z.6.0.M')
+aceite_pescado = cleaner('F068.B1.FLU.C1E.0.C.N.Z.Z.Z.Z.6.0.M')
+salmon = cleaner('F068.B1.FLU.C13.0.C.N.Z.Z.Z.Z.6.0.M')
+trucha = cleaner('F068.B1.FLU.C14.0.C.N.Z.Z.Z.Z.6.0.M')
+merluza = cleaner('F068.B1.FLU.C15.0.C.N.Z.Z.Z.Z.6.0.M')
+conservas_pescado = cleaner('F068.B1.FLU.C16.0.C.N.Z.Z.Z.Z.6.0.M')
+moluscos = cleaner('F068.B1.FLU.C17.0.C.N.Z.Z.Z.Z.6.0.M')
+fruta_desh = cleaner('F068.B1.FLU.C18.0.C.N.Z.Z.Z.Z.6.0.M')
+fruta_cong = cleaner('F068.B1.FLU.C19.0.C.N.Z.Z.Z.Z.6.0.M')
+fruta_jugo = cleaner('F068.B1.FLU.C1A.0.C.N.Z.Z.Z.Z.6.0.M')
+fruta_conserva = cleaner('F068.B1.FLU.C1B.0.C.N.Z.Z.Z.Z.6.0.M')
+carne_ave = cleaner('F068.B1.FLU.C1C.0.C.N.Z.Z.Z.Z.6.0.M')
+carne_cerdo = cleaner('F068.B1.FLU.C1D.0.C.N.Z.Z.Z.Z.6.0.M')
+
+alimentos_industriales = alimentos.join(harina_pescado, rsuffix='_1').join(aceite_pescado, rsuffix='_2').join(salmon, rsuffix='_3').join(trucha, rsuffix='_4').join(merluza, rsuffix='_5').join(conservas_pescado, rsuffix='_6').join(moluscos, rsuffix='_7').join(fruta_desh, rsuffix='_8').join(fruta_cong, rsuffix='_9').join(fruta_jugo, rsuffix='_10').join(fruta_conserva, rsuffix='_11').join(carne_ave, rsuffix='_12').join(carne_cerdo, rsuffix='_13')
+alimentos_industriales.columns = ['total_fob_alimentos', 'Harina de\npescado', 'Aceite de\npescado',
+                                  'Salmón', 'Trucha', 'Merluza', 'Conservas\nde pescado',
+                                  'Moluscos y\ncrustáceos', 'Fruta\ndeshidratada',
+                                  'Fruta\ncongelada', 'Jugo fruta', 'Fruta\nconserva',
+                                  'Carne\nde ave', 'Carne\nde cerdo']
+
+alimentos_industriales_porcion = alimentos_industriales.divide(alimentos_industriales['total_fob_alimentos'], axis=0) * 100
+
+# Grafico pareto industriales-ALIMENTOS
+pareto_alimentos = pd.DataFrame(
+    data=alimentos_industriales.iloc[-1, 1:].values,
+    columns=['count'],
+    index=alimentos_industriales.columns[1:]
+    )
+
+# ordenarlas de manera descendente
+pareto_alimentos = pareto_alimentos.sort_values(by='count', ascending=False)
+
+# añadir una columna del porcentaje acumulado
+pareto_alimentos['cumperc'] = pareto_alimentos['count'].cumsum() / pareto_alimentos['count'].sum() * 100
+
+# Crear el grafico de Pareto
+fig, ax = plt.subplots(figsize=(10, 5))
+ax2 = ax.twinx()
+
+ax.bar(pareto_alimentos.index, pareto_alimentos['count'], color='tab:blue')
+#añadir una linea de porcentaje acumulado
+ax2.plot(pareto_alimentos.index, pareto_alimentos['cumperc'], color='tab:orange', marker='D', ms=4)
+ax2.axhline(y=80, color='tab:orange', linestyle='dashed')
+ax2.yaxis.set_major_formatter(PercentFormatter())
+# especificar el color de los ejes
+ax.tick_params(axis='y', colors='tab:blue')
+ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
+ax2.tick_params(axis='y', colors='tab:orange')
+ax2.set_ylabel('Porcentaje respecto al total de exportaciones de alimentos (%)', color='tab:orange')
+ax.tick_params(axis='x', labelrotation=45)
+
+fig.suptitle('Gráfico de Pareto de las exportaciones de alimentos chilenos', fontweight='bold')
+plt.title('Último dato reportado')
+
+plt.show()
