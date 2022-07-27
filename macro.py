@@ -323,10 +323,10 @@ ax2.yaxis.set_major_formatter(PercentFormatter())
 ax.tick_params(axis='y', colors='tab:blue')
 ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
 ax2.tick_params(axis='y', colors='tab:orange')
-ax2.set_ylabel('Porcentaje respecto al total (%)', color='tab:orange')
+ax2.set_ylabel('Porcentaje respecto al total de exportaciones ASP (%)', color='tab:orange')
 ax.tick_params(axis='x', labelrotation=45)
 
-fig.suptitle('Gráfico de Pareto de las exportaciones agropecuario-silvícola y pesquero chilenas', fontweight='bold')
+fig.suptitle('Gráfico de Pareto de las exportaciones agropecuario-silvícola y pesquero (ASP) chilenas', fontweight='bold')
 plt.title('Último dato reportado')
 
 plt.show()
@@ -342,7 +342,7 @@ ax.stackplot(
     )
 fig.suptitle('Proporción histórica de las exportaciones agropecuario-silvícola y pesquero (ASP) chilenas', fontweight='bold')
 plt.title('Seguimiendo anual (TTM), Sin el sector frutícola.')
-ax.set_ylabel('Porcentaje respecto a las exportaciones ASP totales (%)')
+ax.set_ylabel('Porcentaje respecto a las exportaciones ASP (%)')
 ax.legend(mineras.columns[2:].to_list(), loc='upper left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
@@ -396,7 +396,7 @@ ax2.yaxis.set_major_formatter(PercentFormatter())
 ax.tick_params(axis='y', colors='tab:blue')
 ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
 ax2.tick_params(axis='y', colors='tab:orange')
-ax2.set_ylabel('Porcentaje respecto al total (%)', color='tab:orange')
+ax2.set_ylabel('Porcentaje respecto al total del sector frutícola (%)', color='tab:orange')
 ax.tick_params(axis='x', labelrotation=45)
 
 fig.suptitle('Gráfico de Pareto de las exportaciones sector frutícola chileno', fontweight='bold')
@@ -425,10 +425,10 @@ wedges, *_ = ax1.pie(overall_ratios, autopct='%0.1f%%', startangle=angle,
 sector_fruticola = uvas.join(manzanas, rsuffix='_1').join(peras, rsuffix='_2').join(arandanos, rsuffix='_3').join(kiwis, rsuffix='_4').join(ciruelas, rsuffix='_5').join(cerezas, rsuffix='_6').join(paltas, rsuffix='_7')
 sector_fruticola.columns = ['Uvas', 'Manzanas', 'Peras', 'Arandanos', 'Kiwis', 'Ciruelas', 'Cerezas', 'Paltas'] 
 
-sector_fruticola_porcion = sector_fruticola.divide(agropecuario['Frutícola'], axis=0) * 100
+sector_fruticola_porcion = sector_fruticola.divide(agropecuario['Frutícola'], axis=0).iloc[-1, :].sort_values(ascending=True) * 100
 
-age_ratios = sector_fruticola_porcion.iloc[-1, :].to_list()
-age_labels = sector_fruticola_porcion.columns.to_list()
+age_ratios = sector_fruticola_porcion.to_list()
+age_labels = sector_fruticola_porcion.index.to_list()
 bottom = 1
 width = .2
 
@@ -519,7 +519,7 @@ ax2.yaxis.set_major_formatter(PercentFormatter())
 ax.tick_params(axis='y', colors='tab:blue')
 ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
 ax2.tick_params(axis='y', colors='tab:orange')
-ax2.set_ylabel('Porcentaje respecto al total (%)', color='tab:orange')
+ax2.set_ylabel('Porcentaje respecto al total de exportaciones industriales (%)', color='tab:orange')
 ax.tick_params(axis='x', labelrotation=45)
 
 fig.suptitle('Gráfico de Pareto de las exportaciones industriales chilenas', fontweight='bold')
@@ -543,7 +543,7 @@ ax.stackplot(
     )
 fig.suptitle('Proporción histórica de las exportaciones industriales chilenas', fontweight='bold')
 plt.title('Seguimiendo anual (TTM)')
-ax.set_ylabel('Porcentaje respecto a las exportaciones industriales totales (%)')
+ax.set_ylabel('Porcentaje respecto a las exportaciones industriales (%)')
 ax.legend(['Aliementos', 'Bebidas y tabaco', 'Forestal y muebles de madera',
            'Celulosa, papel y otros', 'Productos químicos', 'Industria metálica basica',
            'Maquinaria y equipos', 'Otros'], loc='upper left')
