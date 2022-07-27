@@ -83,12 +83,14 @@ ax.stackplot(
     comercio.index,
     comercio['bienes'],
     comercio['servicios'],
+    colors=['tab:blue', 'tab:orange'], 
+    labels=['Bienes', 'Servicios'],
     alpha=0.5
     )
 fig.suptitle('Balanza de pagos: Composición exportaciones totales', fontweight='bold')
 plt.title('Seguimiendo anual (TTM)')
 ax.set_ylabel('Porcentaje respecto a las exportaciones totales (%)')
-ax.legend(['Bienes', 'Servicios'], loc='lower left')
+ax.legend(loc='lower left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
 ax.text(0.15, -0.12,  
@@ -167,12 +169,14 @@ ax.stackplot(
     exportaciones_porcion['Minería'],
     exportaciones_porcion['Agropecuario'],
     exportaciones_porcion['Industriales'],
+    colors=['tab:orange', 'tab:green', 'tab:blue'],
+    labels=['Minería', 'Agropecuario', 'Industriales'],
     alpha=0.5
     )
 fig.suptitle('Proporción histórica de las principales categorías de exportaciones de bienes chilenos', fontweight='bold')
 plt.title('Seguimiendo anual (TTM)')
 ax.set_ylabel('Porcentaje respecto a las exportaciones de bienes (%)')
-ax.legend(['Minería', 'Agropecuario-silvícola y pesquero', 'Industriales'], loc='lower left')
+ax.legend(loc='lower left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
 ax.text(0.15, -0.12,  
@@ -256,12 +260,14 @@ ax.stackplot(
     mineras_porcion['Molibdeno'],
     mineras_porcion['Litio'],
     mineras_porcion['Sal'],
+    colors=['tab:blue', 'tab:grey', 'gold', 'tab:purple', 'tab:green', 'tab:red'],
+    labels=['Hierro', 'Plata', 'Oro', 'Molibdeno', 'Litio', 'Sal'],
     alpha=0.5
     )
 fig.suptitle('Proporción histórica de las exportaciones mineras chilenas', fontweight='bold')
 plt.title('Seguimiendo anual (TTM), Sin el cobre.')
 ax.set_ylabel('Porcentaje respecto a las exportaciones mineras (%)')
-ax.legend(mineras.columns[2:].to_list(), loc='upper left')
+ax.legend(loc='upper left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
 ax.text(0.15, -0.12,  
@@ -286,12 +292,14 @@ ax.stackplot(
     mineras_cobre.index,
     mineras_cobre['catodos'],
     mineras_cobre['concentrados'],
+    colors=['tab:grey', 'tab:orange'],
+    labels=['Concentrados', 'Catodos'],
     alpha=0.5
     )
 fig.suptitle('Proporción histórica de las exportaciones de Cobre', fontweight='bold')
 plt.title('Seguimiento anual, solo subcomponentes del Cobre')
 ax.set_ylabel('Porcentaje respecto a las exportaciones de Cobre (%)')
-ax.legend(['Catodos', 'Concentrados'], loc='lower left')
+ax.legend(loc='lower left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
 ax.text(0.15, -0.12,  
@@ -365,12 +373,14 @@ ax.stackplot(
     agropecuario_proporcion['Semillas'],
     agropecuario_proporcion['Silvicola'],
     agropecuario_proporcion['Pesca'],
+    colors=['tab:brown', 'tab:green', 'tab:blue'],
+    labels=['Semillas', 'Sector silvícola', 'Pesca extractiva'],
     alpha=0.5
     )
 fig.suptitle('Proporción histórica de las exportaciones agropecuario-silvícola y pesquero (ASP) chilenas', fontweight='bold')
 plt.title('Seguimiendo anual (TTM), Sin el sector frutícola.')
 ax.set_ylabel('Porcentaje respecto a las exportaciones ASP (%)')
-ax.legend(mineras.columns[2:].to_list(), loc='upper left')
+ax.legend(loc='lower left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
 ax.text(0.15, -0.12,  
@@ -584,14 +594,17 @@ ax.stackplot(
     industriales_proporcion['Industria metálica\nbasica'],
     industriales_proporcion['Maquinaria y\nequipos'],
     industriales_proporcion['Otros'],
+    labels=['Alimentos', 'Bebidas y tabaco', 'Forestal y muebles de madera',
+               'Celulosa, papel y otros', 'Productos químicos', 'Industria metálica basica',
+               'Maquinaria y equipos', 'Otros'],
+    colors=['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
+            'tab:brown', 'tab:pink', 'tab:grey'],
     alpha=0.5
     )
 fig.suptitle('Proporción histórica de las exportaciones industriales chilenas', fontweight='bold')
 plt.title('Seguimiendo anual (TTM)')
 ax.set_ylabel('Porcentaje respecto a las exportaciones industriales (%)')
-ax.legend(['Aliementos', 'Bebidas y tabaco', 'Forestal y muebles de madera',
-           'Celulosa, papel y otros', 'Productos químicos', 'Industria metálica basica',
-           'Maquinaria y equipos', 'Otros'], loc='upper left')
+ax.legend(loc='upper left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
 ax.text(0.15, -0.12,  
@@ -693,7 +706,7 @@ ax.stackplot(
     alpha=0.5,
     colors=['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 
             'tab:purple', 'tab:brown', 'tab:pink', 'tab:gray',
-            'tab:olive', 'tab:cyan', 'black', 'fuchsia', 'gold']
+            'lime', 'tab:cyan', 'black', 'fuchsia', 'gold']
     )
 fig.suptitle('Proporción histórica de las exportaciones de alimentos chilenos', fontweight='bold')
 plt.title('Seguimiendo anual (TTM)')
@@ -715,86 +728,4 @@ ax.text(0.15, -0.12,
 
 plt.show()
 
-# Desglose categoria bebidas y tabaco
-sin_alcohol = cleaner('F068.B1.FLU.C24.0.C.N.Z.Z.Z.Z.6.0.M')
-vino = cleaner('F068.B1.FLU.C22.0.C.N.Z.Z.Z.Z.6.0.M')
-vino_granel = bebidas - sin_alcohol - vino
-
-bebidas_industriales = bebidas.join(sin_alcohol, rsuffix='_1').join(vino, rsuffix='_2').join(vino_granel, rsuffix='_3')
-
-bebidas_industriales.columns = ['total_bebidas_fob', 'Bebidas no alcohólicas',
-                                'Vino embotellado', 'Vino a granel y otros']
-
-# Grafico pareto industriales-BEBIDAS
-pareto_bebidas = pd.DataFrame(
-    data=bebidas_industriales.iloc[-1, 1:].values,
-    columns=['count'],
-    index=bebidas_industriales.columns[1:]
-    )
-
-# ordenarlas de manera descendente
-pareto_bebidas = pareto_bebidas.sort_values(by='count', ascending=False)
-
-# añadir una columna del porcentaje acumulado
-pareto_bebidas['cumperc'] = pareto_bebidas['count'].cumsum() / pareto_bebidas['count'].sum() * 100
-
-# Crear el grafico de Pareto
-fig, ax = plt.subplots(figsize=(10, 5))
-ax2 = ax.twinx()
-
-ax.bar(pareto_bebidas.index, pareto_bebidas['count'], color='tab:blue')
-#añadir una linea de porcentaje acumulado
-ax2.plot(pareto_bebidas.index, pareto_bebidas['cumperc'], color='tab:orange', marker='D', ms=4)
-ax2.axhline(y=80, color='tab:orange', linestyle='dashed')
-ax2.yaxis.set_major_formatter(PercentFormatter())
-# especificar el color de los ejes
-ax.tick_params(axis='y', colors='tab:blue')
-ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
-ax2.tick_params(axis='y', colors='tab:orange')
-ax2.set_ylabel('Porcentaje respecto al total de exportaciones de ByT (%)', color='tab:orange')
-ax.tick_params(axis='x', labelrotation=45)
-
-fig.suptitle('Gráfico de Pareto de las exportaciones de Bebidas y tabaco (ByT) chilenos', fontweight='bold')
-plt.title('Último dato reportado')
-
-ax.text(0.15, -0.35,  
-         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
-         horizontalalignment='center',
-         verticalalignment='center', 
-         transform=ax.transAxes, 
-         fontsize=8, 
-         color='black',
-         bbox=dict(facecolor='tab:gray', alpha=0.5))
-
-plt.show()
-
-bebidas_industriales_porcion = bebidas_industriales.divide(bebidas_industriales['total_bebidas_fob'], axis=0) * 100
-
-# Evolución historica
-fig, ax= plt.subplots(figsize=(10, 5))
-
-ax.stackplot(
-    bebidas_industriales_porcion.index,
-    bebidas_industriales_porcion['Bebidas no alcohólicas'],
-    bebidas_industriales_porcion['Vino embotellado'],
-    bebidas_industriales_porcion['Vino a granel y otros'],
-    alpha=0.5,
-    colors=['tab:blue', 'tab:orange', 'tab:green'],
-    labels=bebidas_industriales_porcion.columns[1:].to_list()
-    )
-fig.suptitle('Proporción histórica de las exportaciones de Bebidas y tabaco (ByT) chilenos', fontweight='bold')
-plt.title('Seguimiendo anual (TTM)')
-ax.set_ylabel('Porcentaje respecto a las exportaciones de ByT (%)')
-ax.legend()
-ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-
-ax.text(0.15, -0.12,  
-         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
-         horizontalalignment='center',
-         verticalalignment='center', 
-         transform=ax.transAxes, 
-         fontsize=8, 
-         color='black',
-         bbox=dict(facecolor='tab:gray', alpha=0.5))
-
-plt.show()
+#%% Pareto de todos los subsectores de las exportaciones
