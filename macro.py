@@ -149,6 +149,15 @@ ax.tick_params(axis='x', labelrotation=45)
 fig.suptitle('Gráfico de Pareto de las exportaciones de bienes chilenos', fontweight='bold')
 plt.title('Último dato reportado')
 
+ax.text(0.15, -0.25,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
 plt.show()
 
 fig, ax = plt.subplots(figsize=(10, 5))
@@ -225,6 +234,15 @@ ax.tick_params(axis='x', labelrotation=45)
 
 fig.suptitle('Gráfico de Pareto de las exportaciones mineras chilenas', fontweight='bold')
 plt.title('Último dato reportado')
+
+ax.text(0.15, -0.2,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
 
 plt.show()
 
@@ -329,6 +347,15 @@ ax.tick_params(axis='x', labelrotation=45)
 fig.suptitle('Gráfico de Pareto de las exportaciones agropecuario-silvícola y pesquero (ASP) chilenas', fontweight='bold')
 plt.title('Último dato reportado')
 
+ax.text(0.15, -0.25,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
 plt.show()
 
 fig, ax = plt.subplots(figsize=(10, 5))
@@ -401,6 +428,15 @@ ax.tick_params(axis='x', labelrotation=45)
 
 fig.suptitle('Gráfico de Pareto de las exportaciones sector frutícola chileno', fontweight='bold')
 plt.title('Último dato reportado')
+
+ax.text(0.15, -0.25,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
 
 plt.show()
 
@@ -525,6 +561,15 @@ ax.tick_params(axis='x', labelrotation=45)
 fig.suptitle('Gráfico de Pareto de las exportaciones industriales chilenas', fontweight='bold')
 plt.title('Último dato reportado')
 
+ax.text(0.15, -0.3,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
 plt.show()
 
 fig, ax = plt.subplots(figsize=(10, 5))
@@ -615,5 +660,141 @@ ax.tick_params(axis='x', labelrotation=45)
 
 fig.suptitle('Gráfico de Pareto de las exportaciones de alimentos chilenos', fontweight='bold')
 plt.title('Último dato reportado')
+
+ax.text(0.15, -0.3,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+plt.show()
+
+# Evolución historica
+fig, ax= plt.subplots(figsize=(10, 5))
+
+ax.stackplot(
+    alimentos_industriales_porcion.index,
+    alimentos_industriales_porcion['Harina de\npescado'],
+    alimentos_industriales_porcion['Aceite de\npescado'],
+    alimentos_industriales_porcion['Salmón'],
+    alimentos_industriales_porcion['Trucha'],
+    alimentos_industriales_porcion['Merluza'],
+    alimentos_industriales_porcion['Conservas\nde pescado'],
+    alimentos_industriales_porcion['Moluscos y\ncrustáceos'],
+    alimentos_industriales_porcion['Fruta\ndeshidratada'],
+    alimentos_industriales_porcion['Fruta\ncongelada'],
+    alimentos_industriales_porcion['Jugo fruta'],
+    alimentos_industriales_porcion['Fruta\nconserva'],
+    alimentos_industriales_porcion['Carne\nde ave'],
+    alimentos_industriales_porcion['Carne\nde cerdo'],
+    alpha=0.5,
+    colors=['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 
+            'tab:purple', 'tab:brown', 'tab:pink', 'tab:gray',
+            'tab:olive', 'tab:cyan', 'black', 'fuchsia', 'gold']
+    )
+fig.suptitle('Proporción histórica de las exportaciones de alimentos chilenos', fontweight='bold')
+plt.title('Seguimiendo anual (TTM)')
+ax.set_ylabel('Porcentaje respecto a las exportaciones de alimentos (%)')
+ax.legend(['Harina de pescado', 'Aceite de pescado', 'Salmón', 'Trucha',
+           'Merluza', 'Conservas de pescado','Moluscos y crustáceos', 
+           'Fruta deshidratada','Fruta congelada', 'Jugo fruta', 
+           'Fruta conserva','Carne de ave', 'Carne de cerdo'], loc='upper left')
+ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+
+ax.text(0.15, -0.12,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+plt.show()
+
+# Desglose categoria bebidas y tabaco
+sin_alcohol = cleaner('F068.B1.FLU.C24.0.C.N.Z.Z.Z.Z.6.0.M')
+vino = cleaner('F068.B1.FLU.C22.0.C.N.Z.Z.Z.Z.6.0.M')
+vino_granel = bebidas - sin_alcohol - vino
+
+bebidas_industriales = bebidas.join(sin_alcohol, rsuffix='_1').join(vino, rsuffix='_2').join(vino_granel, rsuffix='_3')
+
+bebidas_industriales.columns = ['total_bebidas_fob', 'Bebidas no alcohólicas',
+                                'Vino embotellado', 'Vino a granel y otros']
+
+# Grafico pareto industriales-BEBIDAS
+pareto_bebidas = pd.DataFrame(
+    data=bebidas_industriales.iloc[-1, 1:].values,
+    columns=['count'],
+    index=bebidas_industriales.columns[1:]
+    )
+
+# ordenarlas de manera descendente
+pareto_bebidas = pareto_bebidas.sort_values(by='count', ascending=False)
+
+# añadir una columna del porcentaje acumulado
+pareto_bebidas['cumperc'] = pareto_bebidas['count'].cumsum() / pareto_bebidas['count'].sum() * 100
+
+# Crear el grafico de Pareto
+fig, ax = plt.subplots(figsize=(10, 5))
+ax2 = ax.twinx()
+
+ax.bar(pareto_bebidas.index, pareto_bebidas['count'], color='tab:blue')
+#añadir una linea de porcentaje acumulado
+ax2.plot(pareto_bebidas.index, pareto_bebidas['cumperc'], color='tab:orange', marker='D', ms=4)
+ax2.axhline(y=80, color='tab:orange', linestyle='dashed')
+ax2.yaxis.set_major_formatter(PercentFormatter())
+# especificar el color de los ejes
+ax.tick_params(axis='y', colors='tab:blue')
+ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
+ax2.tick_params(axis='y', colors='tab:orange')
+ax2.set_ylabel('Porcentaje respecto al total de exportaciones de ByT (%)', color='tab:orange')
+ax.tick_params(axis='x', labelrotation=45)
+
+fig.suptitle('Gráfico de Pareto de las exportaciones de Bebidas y tabaco (ByT) chilenos', fontweight='bold')
+plt.title('Último dato reportado')
+
+ax.text(0.15, -0.35,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+plt.show()
+
+bebidas_industriales_porcion = bebidas_industriales.divide(bebidas_industriales['total_bebidas_fob'], axis=0) * 100
+
+# Evolución historica
+fig, ax= plt.subplots(figsize=(10, 5))
+
+ax.stackplot(
+    bebidas_industriales_porcion.index,
+    bebidas_industriales_porcion['Bebidas no alcohólicas'],
+    bebidas_industriales_porcion['Vino embotellado'],
+    bebidas_industriales_porcion['Vino a granel y otros'],
+    alpha=0.5,
+    colors=['tab:blue', 'tab:orange', 'tab:green'],
+    labels=bebidas_industriales_porcion.columns[1:].to_list()
+    )
+fig.suptitle('Proporción histórica de las exportaciones de Bebidas y tabaco (ByT) chilenos', fontweight='bold')
+plt.title('Seguimiendo anual (TTM)')
+ax.set_ylabel('Porcentaje respecto a las exportaciones de ByT (%)')
+ax.legend()
+ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+
+ax.text(0.15, -0.12,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
 
 plt.show()
