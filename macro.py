@@ -145,7 +145,7 @@ ax2.yaxis.set_major_formatter(PercentFormatter())
 ax.tick_params(axis='y', colors='tab:blue')
 ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
 ax2.tick_params(axis='y', colors='tab:orange')
-ax2.set_ylabel('Porcentaje respecto al total de exportaciones de bienes (%)', color='tab:orange')
+ax2.set_ylabel('Porcentaje acumulado de exportaciones de bienes (%)', color='tab:orange')
 ax.tick_params(axis='x', labelrotation=45)
 
 fig.suptitle('Gráfico de Pareto de las exportaciones de bienes chilenos', fontweight='bold')
@@ -233,7 +233,7 @@ ax2.yaxis.set_major_formatter(PercentFormatter())
 ax.tick_params(axis='y', colors='tab:blue')
 ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
 ax2.tick_params(axis='y', colors='tab:orange')
-ax2.set_ylabel('Porcentaje respecto al total de exportaciones mineras (%)', color='tab:orange')
+ax2.set_ylabel('Porcentaje acumulado de exportaciones mineras (%)', color='tab:orange')
 ax.tick_params(axis='x', labelrotation=45)
 
 fig.suptitle('Gráfico de Pareto de las exportaciones mineras chilenas', fontweight='bold')
@@ -349,7 +349,7 @@ ax2.yaxis.set_major_formatter(PercentFormatter())
 ax.tick_params(axis='y', colors='tab:blue')
 ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
 ax2.tick_params(axis='y', colors='tab:orange')
-ax2.set_ylabel('Porcentaje respecto al total de exportaciones ASP (%)', color='tab:orange')
+ax2.set_ylabel('Porcentaje acumulado de exportaciones ASP (%)', color='tab:orange')
 ax.tick_params(axis='x', labelrotation=45)
 
 fig.suptitle('Gráfico de Pareto de las exportaciones agropecuario-silvícola y pesquero (ASP) chilenas', fontweight='bold')
@@ -433,7 +433,7 @@ ax2.yaxis.set_major_formatter(PercentFormatter())
 ax.tick_params(axis='y', colors='tab:blue')
 ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
 ax2.tick_params(axis='y', colors='tab:orange')
-ax2.set_ylabel('Porcentaje respecto al total del sector frutícola (%)', color='tab:orange')
+ax2.set_ylabel('Porcentaje acumulado de exportaciones del sector frutícola (%)', color='tab:orange')
 ax.tick_params(axis='x', labelrotation=45)
 
 fig.suptitle('Gráfico de Pareto de las exportaciones sector frutícola chileno', fontweight='bold')
@@ -565,7 +565,7 @@ ax2.yaxis.set_major_formatter(PercentFormatter())
 ax.tick_params(axis='y', colors='tab:blue')
 ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
 ax2.tick_params(axis='y', colors='tab:orange')
-ax2.set_ylabel('Porcentaje respecto al total de exportaciones industriales (%)', color='tab:orange')
+ax2.set_ylabel('Porcentaje acumulado de exportaciones industriales (%)', color='tab:orange')
 ax.tick_params(axis='x', labelrotation=45)
 
 fig.suptitle('Gráfico de Pareto de las exportaciones industriales chilenas', fontweight='bold')
@@ -668,7 +668,7 @@ ax2.yaxis.set_major_formatter(PercentFormatter())
 ax.tick_params(axis='y', colors='tab:blue')
 ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
 ax2.tick_params(axis='y', colors='tab:orange')
-ax2.set_ylabel('Porcentaje respecto al total de exportaciones de alimentos (%)', color='tab:orange')
+ax2.set_ylabel('Porcentaje acumulado de exportaciones de alimentos (%)', color='tab:orange')
 ax.tick_params(axis='x', labelrotation=45)
 
 fig.suptitle('Gráfico de Pareto de las exportaciones de alimentos chilenos', fontweight='bold')
@@ -729,3 +729,54 @@ ax.text(0.15, -0.12,
 plt.show()
 
 #%% Pareto de todos los subsectores de las exportaciones
+
+subsectores_exportaciones = mineras.iloc[:, 1:].join(agropecuario.iloc[:, 1:]).join(industriales.iloc[:, 1:])
+subsectores_exportaciones.columns = ['Cobre', 'Hierro', 'Plata', 'Oro', 'Molibdeno', 
+                                     'Litio', 'Sal', 'Frutícola', 'Semillas', 
+                                     'Silvicola', 'Pesca', 'Alimentos', 'Bebidas', 
+                                     'Forestal', 'Celulosa', 
+                                     'Químicos','Ind metálica', 
+                                     'Maquinaria', 'Otros Industriales']
+
+# Grafico pareto de los subsectores exportadores
+pareto_subsectores_exportaciones = pd.DataFrame(
+    data=subsectores_exportaciones.iloc[-1, 1:].values,
+    columns=['count'],
+    index=subsectores_exportaciones.columns[1:]
+    )
+
+# ordenarlas de manera descendente
+pareto_subsectores_exportaciones = pareto_subsectores_exportaciones.sort_values(by='count', ascending=False)
+
+# añadir una columna del porcentaje acumulado
+pareto_subsectores_exportaciones['cumperc'] = pareto_subsectores_exportaciones['count'].cumsum() / pareto_subsectores_exportaciones['count'].sum() * 100
+
+# Crear el grafico de Pareto
+fig, ax = plt.subplots(figsize=(10, 5))
+ax2 = ax.twinx()
+
+ax.bar(pareto_subsectores_exportaciones.index, pareto_subsectores_exportaciones['count'], color='tab:blue')
+#añadir una linea de porcentaje acumulado
+ax2.plot(pareto_subsectores_exportaciones.index, pareto_subsectores_exportaciones['cumperc'], color='tab:orange', marker='D', ms=4)
+ax2.axhline(y=80, color='tab:orange', linestyle='dashed')
+ax2.yaxis.set_major_formatter(PercentFormatter())
+# especificar el color de los ejes
+ax.tick_params(axis='y', colors='tab:blue')
+ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
+ax2.tick_params(axis='y', colors='tab:orange')
+ax2.set_ylabel('Porcentaje acumulado de exportaciones de bienes (%)', color='tab:orange')
+ax.tick_params(axis='x', labelrotation=90)
+
+fig.suptitle('Gráfico de Pareto de las exportaciones de bienes chilenos', fontweight='bold')
+plt.title('Último dato reportado')
+
+ax.text(0.15, -0.3,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+plt.show()
