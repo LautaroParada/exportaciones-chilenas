@@ -108,32 +108,45 @@ simbolos = simbolos[simbolos['Currency'] == 'CLP']
 
 # Solicitar a cada empresa el sector en que se encuentra, para así
 # caracterizar las industrias disponibles en la API
-industrias_empresas = pd.DataFrame(columns=['empresa', 'sector', 'industria', 'pb'])
+industrias_empresas = pd.DataFrame()
 import time
 for row in range(simbolos.shape[0]):
     try:
         ind_ = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='General')['Industry']
         sec_ = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='General')['Sector']
-        pb_ = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Valuation::PriceBookMRQ')
-        roe_ = float((
-            fundamental_caller(simbolos.iloc[row, 0] + ".SN", 
-                                  filter_='Financials::Income_Statement::quarterly')['netIncome'][-1:] /\
-            (fundamental_caller(simbolos.iloc[row, 0] + ".SN", 
-                               filter_='Financials::Balance_Sheet::quarterly')['totalStockholderEquity'][-1:]/4)
-            ).values) * 100
-        roa_ = float((
-            fundamental_caller(simbolos.iloc[row, 0] + ".SN", 
-                                  filter_='Financials::Income_Statement::quarterly')['netIncome'][-1:] /\
-            (fundamental_caller(simbolos.iloc[row, 0] + ".SN", 
-                               filter_='Financials::Balance_Sheet::quarterly')['totalAssets'][-1:] / 4)
-            ).values) * 100
+        # parte de valorización
+        ev_ebitda = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Valuation::EnterpriseValueEbitda')
+        ev_rev = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Valuation::EnterpriseValueRevenue')
+        pb = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Valuation::PriceBookMRQ')
+        ps = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Valuation::PriceSalesTTM')
+        pe = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Valuation::TrailingPE')
+        # Highlights
+        roe = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Highlights::ReturnOnEquityTTM')
+        roa = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Highlights::ReturnOnAssetsTTM')
+        # ROCE = NOPAT / Capital employed = (EBIT*(1-tax)) / (Equity + Long term debt)
+        op_margin = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Highlights::OperatingMarginTTM')
+        mkt_cap = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Highlights::MarketCapitalization')
+        # parte de technicals
+        beta = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Technicals::Beta')
+        # parte dividendos
+        payout = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='SplitsDividends::PayoutRatio')
+        fw_yield = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='SplitsDividends::ForwardAnnualDividendYield')
         new_row = pd.DataFrame([{
             'empresa':simbolos.iloc[row, 0] + ".SN", 
             'sector':sec_,
             'industria': ind_,
-            'pb':pb_,
-            'roe':roe_,
-            'roa': roa_
+            'ev_ebitda': ev_ebitda,
+            'ev_rev': ev_rev,
+            'pb': pb,
+            'ps': ps,
+            'pe': pe,
+            'roe':roe,
+            'roa': roa,
+            'op_margin': op_margin,
+            'mkt_cap': float(mkt_cap),
+            'beta': float(beta),
+            'payout': payout,
+            'fw_yield': fw_yield,
                                  }])
         industrias_empresas = pd.concat([industrias_empresas, new_row]).reset_index(drop=True)
         print(f"{simbolos.iloc[row, 0] + '.SN'}")
@@ -142,13 +155,16 @@ for row in range(simbolos.shape[0]):
     time.sleep(2)
     
 industrias_empresas.sort_values(by=['sector', 'industria'], inplace=True)
-industrias_empresas.dropna(inplace=True)
+industrias_empresas.set_index('empresa', inplace=True)
+# imputar NA en cada columna por la mediana de cada sector, si es el unico, medinana del mercado
 
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score
+# Filtrar por las empresas del quintal 60 hacia arriba en market cap (3er quintil)
+mkt_cap_filter = pd.to_numeric(industrias_empresas['mkt_cap'], errors='coerce').quantile(0.6)
 
-x = industrias_empresas.pb.values.flatten()
-y = industrias_empresas.roe.values.flatten()
+x = industrias_empresas[industrias_empresas['mkt_cap']>=mkt_cap_filter].roe.values.flatten()
+y = industrias_empresas[industrias_empresas['mkt_cap']>=mkt_cap_filter].pb.values.flatten()
 
 modelo = np.poly1d(np.polyfit(x, y, 1))
 r_2 = r2_score(y, modelo(x))
@@ -157,11 +173,11 @@ fig, ax = plt.subplots(figsize=(10, 5))
 
 ax.scatter(x, y, color='tab:blue')
 ax.plot(x, modelo(x), color='tab:orange')
-fig.suptitle('', fontweight='bold')
-plt.title('')
-ax.set_ylabel('ROE')
-ax.set_xlabel('ROA')
-ax.text(0.8, 0.8,  
+fig.suptitle('Relación entre PB y el ROE del mercado chileno', fontweight='bold')
+plt.title('Se consideran empresas con cap bursatil mediana hasta alta')
+ax.set_ylabel('PB')
+ax.set_xlabel('ROE')
+ax.text(0.2, 0.8,  
          r"$R^{2} = $" + f"{round(r_2,2)}", 
          horizontalalignment='center',
          verticalalignment='center', 
@@ -172,7 +188,44 @@ ax.text(0.8, 0.8,
 
 # Graph source
 ax.text(0.2, -0.17,  
-         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         "Fuente: EOD Historical Data   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+plt.show()
+
+# Caso EMPRESAS FINANCIERAS
+sector_ind = 'Consumer Defensive'
+x = industrias_empresas[industrias_empresas['sector']==sector_ind].roe.values.flatten()
+y = industrias_empresas[industrias_empresas['sector']==sector_ind].pb.values.flatten()
+
+modelo = np.poly1d(np.polyfit(x, y, 1))
+r_2 = r2_score(y, modelo(x))
+
+fig, ax = plt.subplots(figsize=(10, 5))
+
+ax.scatter(x, y, color='tab:blue')
+ax.plot(x, modelo(x), color='tab:orange')
+fig.suptitle('Relación entre PB y el ROE', fontweight='bold')
+plt.title(f'Sector de {sector_ind} chileno')
+ax.set_ylabel('PB')
+ax.set_xlabel('ROE')
+ax.text(0.8, 0.1,  
+         r"$R^{2} = $" + f"{round(r_2,2)}", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=24, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+# Graph source
+ax.text(0.2, -0.17,  
+         "Fuente: EOD Historical Data   Gráfico: Lautaro Parada", 
          horizontalalignment='center',
          verticalalignment='center', 
          transform=ax.transAxes, 
