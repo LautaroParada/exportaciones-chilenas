@@ -65,6 +65,42 @@ def fundamental_caller(stock_ticker:str, filter_:str, delete_extras:bool=True, r
     
     return temp_
 
+def cleaner(serie:str, resam:str=None, operations:list=None):
+    """
+    Limpiar la serie proveniente del la APIy dejarla lista para ocupar
+
+    Parameters
+    ----------
+    serie : str
+        id de la serie macro a solicitar.
+    resam : str
+        frecuencia para el resampling.
+    operation : list
+        operación(es) para agregar los datos resampliandos.
+
+    Returns
+    -------
+    pandas DataFrame
+        serie lista para ocupar.
+
+    """
+    serie_ = pd.DataFrame(client.get_macro(serie=serie))
+    serie_['value'] = pd.to_numeric(serie_['value'], errors='coerce')
+    serie_['indexDateString'] = pd.to_datetime(serie_['indexDateString'], format='%d-%m-%Y')
+    serie_.set_index('indexDateString', inplace=True)
+    del serie_['statusCode']
+    
+    if resam is not None:
+        if operations is not None:
+            serie_ = serie_.resample(resam).agg(operations)
+            # renombrar las columnas
+            serie_.columns = ['_'.join(x) for x in serie_.columns]
+            return serie_
+        else:
+            print('Ocupar ')
+    else:
+        return serie_
+    
 #%% Filtrar por las acciones expuestas a los sectores exportadores
 
 """
@@ -123,7 +159,7 @@ for row in range(simbolos.shape[0]):
         # Highlights
         roe = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Highlights::ReturnOnEquityTTM')
         roa = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Highlights::ReturnOnAssetsTTM')
-        # ROCE = NOPAT / Capital employed = (EBIT*(1-tax)) / (Equity + Long term debt)
+        # ROIC = NOPAT / Avergae Invested Capital = (EBIT*(1-tax)) / (Fixed Assets + Net Working Capital)
         op_margin = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Highlights::OperatingMarginTTM')
         mkt_cap = client.get_fundamental_equity(simbolos.iloc[row, 0] + ".SN", filter_='Highlights::MarketCapitalization')
         # parte de technicals
@@ -154,10 +190,43 @@ for row in range(simbolos.shape[0]):
         print(f"No se pudo para {simbolos.iloc[row, 0] + '.SN'}")
     time.sleep(2)
     
+#%% Agregando el wacc
+
+#%% Agregando la tasa de crecimiento permanente
+from bcch import BancoCentralDeChile
+# Por seguridad, es mejor guardar las contraseñas y usuarios en las variables de entorno
+bcch_user = os.environ['BCCH_USER']
+bcch_pwd = os.environ['BCCH_PWD']
+
+# Creación de la instancia
+client = BancoCentralDeChile(bcch_user, bcch_pwd)
+
+# PIB, volumen a precios del año anterior encadenado, referencia 2018 (miles de millones de pesos encadenados)
+pib_ = cleaner('F032.PIB.FLU.R.CLP.EP18.Z.Z.0.T').pct_change().rolling(window=40).mean() * 4
+
+# Ocupare el promedio a largo plazo de chile
+import statsmodels.api as sm
+# El autor del filtro recomienda 1600 para data trimestral
+cycle, trend = sm.tsa.filters.hpfilter(pib_.dropna(), 1600)
+# El último dato es el que importa
+perpetual_growth_rate = trend[-1]
+
+#%% Limpiando los datos
 industrias_empresas.sort_values(by=['sector', 'industria'], inplace=True)
 industrias_empresas.set_index('empresa', inplace=True)
 # imputar NA en cada columna por la mediana de cada sector, si es el unico, medinana del mercado
+sectors = industrias_empresas.sector.value_counts().index.to_list()
+for sec in sectors:
+    # solo columnas numericas
+    temp_ = industrias_empresas[industrias_empresas['sector']==sec].select_dtypes(exclude = ['object'])
+    temp_columns = temp_.columns
+    # ir por cada columna llenada los NAs con la mediana
+    for col in temp_columns:
+        temp_[col] = temp_[col].fillna(temp_[col].median())
+    
+    print(f"Listo el sector de {sec}")
 
+#%% Graficando los resultados
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score
 # Filtrar por las empresas del quintal 60 hacia arriba en market cap (3er quintil)
@@ -177,6 +246,9 @@ fig.suptitle('Relación entre PB y el ROE del mercado chileno', fontweight='bold
 plt.title('Se consideran empresas con cap bursatil mediana hasta alta')
 ax.set_ylabel('PB')
 ax.set_xlabel('ROE')
+# limites de valorización
+ax.axhline(y=np.median(y), color='tab:red', linestyle='dashed')
+ax.axvline(x=np.median(x), color='tab:red', linestyle='dashed')
 ax.text(0.2, 0.8,  
          r"$R^{2} = $" + f"{round(r_2,2)}", 
          horizontalalignment='center',
@@ -198,6 +270,11 @@ ax.text(0.2, -0.17,
 
 plt.show()
 
+# Empresas subvaloradas
+subvaloradas = industrias_empresas[(industrias_empresas['roe']>=np.median(x)) & (industrias_empresas['pb']<=np.median(y))].index.to_list()
+print(f"Las empresas infravaloradas para el mercado chileno son: {subvaloradas}")
+
+
 # Caso EMPRESAS FINANCIERAS
 sector_ind = 'Consumer Defensive'
 x = industrias_empresas[industrias_empresas['sector']==sector_ind].roe.values.flatten()
@@ -214,6 +291,9 @@ fig.suptitle('Relación entre PB y el ROE', fontweight='bold')
 plt.title(f'Sector de {sector_ind} chileno')
 ax.set_ylabel('PB')
 ax.set_xlabel('ROE')
+# limites de valorización
+ax.axhline(y=np.median(y), color='tab:red', linestyle='dashed')
+ax.axvline(x=np.median(x), color='tab:red', linestyle='dashed')
 ax.text(0.8, 0.1,  
          r"$R^{2} = $" + f"{round(r_2,2)}", 
          horizontalalignment='center',
@@ -234,3 +314,7 @@ ax.text(0.2, -0.17,
          bbox=dict(facecolor='tab:gray', alpha=0.5))
 
 plt.show()
+
+# Empresas subvaloradas
+subvaloradas = industrias_empresas[(industrias_empresas['sector']==sector_ind) & (industrias_empresas['roe']>=np.median(x)) & (industrias_empresas['pb']<=np.median(y))].index.to_list()
+print(f"Las empresas infravaloradas para {sector_ind} chileno son: {subvaloradas}")
