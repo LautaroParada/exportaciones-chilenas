@@ -88,7 +88,7 @@ ax.stackplot(
     alpha=0.5
     )
 fig.suptitle('Balanza de pagos: Composición exportaciones totales', fontweight='bold')
-plt.title('Seguimiendo anual (TTM)')
+plt.title('Seguimiento anual (TTM)')
 ax.set_ylabel('Porcentaje respecto a las exportaciones totales (%)')
 ax.legend(loc='lower left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
@@ -143,7 +143,7 @@ ax2.axhline(y=80, color='tab:orange', linestyle='dashed')
 ax2.yaxis.set_major_formatter(PercentFormatter())
 # especificar el color de los ejes
 ax.tick_params(axis='y', colors='tab:blue')
-ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
+ax.set_ylabel('Millones de dólares (USD)', color='tab:blue')
 ax2.tick_params(axis='y', colors='tab:orange')
 ax2.set_ylabel('Porcentaje acumulado de exportaciones de bienes (%)', color='tab:orange')
 ax.tick_params(axis='x', labelrotation=45)
@@ -174,7 +174,7 @@ ax.stackplot(
     alpha=0.5
     )
 fig.suptitle('Proporción histórica de las principales categorías de exportaciones de bienes chilenos', fontweight='bold')
-plt.title('Seguimiendo anual (TTM)')
+plt.title('Seguimiento anual (TTM)')
 ax.set_ylabel('Porcentaje respecto a las exportaciones de bienes (%)')
 ax.legend(loc='lower left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
@@ -738,6 +738,52 @@ subsectores_exportaciones.columns = ['Cobre', 'Hierro', 'Plata', 'Oro', 'Molibde
                                      'Químicos','Ind metálica', 
                                      'Maquinaria', 'Otros Industriales']
 
+# Pareto con el cobre
+# Grafico pareto de los subsectores exportadores
+pareto_subsectores_exportaciones = pd.DataFrame(
+    data=subsectores_exportaciones.iloc[-1, :].values,
+    columns=['count'],
+    index=subsectores_exportaciones.columns[:]
+    )
+
+# ordenarlas de manera descendente
+pareto_subsectores_exportaciones = pareto_subsectores_exportaciones.sort_values(by='count', ascending=False)
+
+# añadir una columna del porcentaje acumulado
+pareto_subsectores_exportaciones['cumperc'] = pareto_subsectores_exportaciones['count'].cumsum() / pareto_subsectores_exportaciones['count'].sum() * 100
+
+# Crear el grafico de Pareto
+fig, ax = plt.subplots(figsize=(10, 5))
+ax2 = ax.twinx()
+
+ax.bar(pareto_subsectores_exportaciones.index, pareto_subsectores_exportaciones['count'], color='tab:blue')
+#añadir una linea de porcentaje acumulado
+ax2.plot(pareto_subsectores_exportaciones.index, pareto_subsectores_exportaciones['cumperc'], color='tab:orange', marker='D', ms=4)
+ax2.axhline(y=80, color='tab:orange', linestyle='dashed')
+ax2.yaxis.set_major_formatter(PercentFormatter())
+# especificar el color de los ejes
+ax.tick_params(axis='y', colors='tab:blue')
+ax.set_ylabel('Millones de dolares (USD)', color='tab:blue')
+ax2.tick_params(axis='y', colors='tab:orange')
+ax2.set_ylabel('Porcentaje acumulado de exportaciones de bienes (%)', color='tab:orange')
+ax.tick_params(axis='x', labelrotation=90)
+
+fig.suptitle('Gráfico de Pareto de las exportaciones de bienes chilenos', fontweight='bold')
+plt.title('Último dato reportado')
+
+ax.text(0.15, -0.3,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+plt.show()
+
+# PAreto sin el cobre
+
 # Grafico pareto de los subsectores exportadores
 pareto_subsectores_exportaciones = pd.DataFrame(
     data=subsectores_exportaciones.iloc[-1, 1:].values,
@@ -767,7 +813,7 @@ ax2.tick_params(axis='y', colors='tab:orange')
 ax2.set_ylabel('Porcentaje acumulado de exportaciones de bienes (%)', color='tab:orange')
 ax.tick_params(axis='x', labelrotation=90)
 
-fig.suptitle('Gráfico de Pareto de las exportaciones de bienes chilenos', fontweight='bold')
+fig.suptitle('Gráfico de Pareto de las exportaciones de bienes chilenos, se EXCLUYE el cobre.', fontweight='bold')
 plt.title('Último dato reportado')
 
 ax.text(0.15, -0.3,  
