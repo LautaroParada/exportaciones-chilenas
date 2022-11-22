@@ -266,7 +266,7 @@ ax.stackplot(
     )
 fig.suptitle('Proporción histórica de las exportaciones mineras chilenas', fontweight='bold')
 plt.title('Seguimiendo anual (TTM), Sin el cobre.')
-ax.set_ylabel('Porcentaje respecto a las exportaciones mineras (%)')
+ax.set_ylabel('Porcentaje respecto a las exportaciones mineras totales (%)')
 ax.legend(loc='upper left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
@@ -292,13 +292,13 @@ ax.stackplot(
     mineras_cobre.index,
     mineras_cobre['catodos'],
     mineras_cobre['concentrados'],
-    colors=['tab:grey', 'tab:orange'],
-    labels=['Concentrados', 'Catodos'],
+    colors=['tab:orange', 'tab:grey'],
+    labels=['Cátodos', 'Concentrados'],
     alpha=0.5
     )
-fig.suptitle('Proporción histórica de las exportaciones de Cobre', fontweight='bold')
-plt.title('Seguimiento anual, solo subcomponentes del Cobre')
-ax.set_ylabel('Porcentaje respecto a las exportaciones de Cobre (%)')
+fig.suptitle('Proporción histórica de las exportaciones relacionadas al Cobre', fontweight='bold')
+plt.title('Seguimiento anual (TTM)')
+ax.set_ylabel('Porcentaje respecto a las exportaciones mineras totales (%)')
 ax.legend(loc='lower left')
 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
@@ -450,6 +450,7 @@ ax.text(0.15, -0.25,
 
 plt.show()
 
+#%% Grafico de torta para el sector fruticola
 from matplotlib.patches import ConnectionPatch
 # https://matplotlib.org/stable/gallery/pie_and_polar_charts/bar_of_pie.html#sphx-glr-gallery-pie-and-polar-charts-bar-of-pie-py
 # Seleccionando los datos para el pie chart
@@ -463,7 +464,7 @@ overall_ratios = agropecuario_proporcion.iloc[-1, 1:].to_list()
 labels = agropecuario_proporcion.iloc[-1, 1:].index.to_list()
 explode = [0.1, 0, 0, 0]
 # rotate so that first wedge is split by the x-axis
-angle = -90.5 * overall_ratios[0]
+angle = -30.25 * overall_ratios[0]
 wedges, *_ = ax1.pie(overall_ratios, autopct='%0.1f%%', startangle=angle,
                      labels=labels, explode=explode)
 

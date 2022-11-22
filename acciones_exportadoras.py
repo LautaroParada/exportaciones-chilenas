@@ -250,7 +250,7 @@ for sec in sectors:
         industrias_empresas[col].replace(
             to_replace=np.nan, 
             value=industrias_empresas[col].median(), 
-            inplace=True
+            inplace=True 
             )
     
     print(f"Listo el sector de {sec}")
