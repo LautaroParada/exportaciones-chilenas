@@ -486,7 +486,7 @@ for j, (height, label) in enumerate(reversed([*zip(age_ratios, age_labels)])):
     bc = ax2.bar(0, height, width, bottom=bottom, color='tab:purple', label=label, alpha=0.1 + (1/len(age_labels)) * j)
     ax2.bar_label(bc, labels=[f"{round(height, 1)}%"], label_type='center')
 
-ax2.set_title('Desglose exportaciones\nsector Frutícula')
+ax2.set_title('Desglose exportaciones\nsector Frutícula', fontweight='bold')
 ax2.legend()
 ax2.axis('off')
 ax2.set_xlim(- 1 * width, 1 * width)
@@ -818,6 +818,178 @@ fig.suptitle('Gráfico de Pareto de las exportaciones de bienes chilenos, se EXC
 plt.title('Último dato reportado')
 
 ax.text(0.15, -0.3,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+plt.show()
+
+#%% Terminos de Comercio
+from matplotlib.dates import datestr2num
+
+def cleaner_dolar(serie:str, resam:str=None, operations:list=None):
+    """
+    Limpiar la serie proveniente del la APIy dejarla lista para ocupar
+
+    Parameters
+    ----------
+    serie : str
+        id de la serie macro a solicitar.
+    resam : str
+        frecuencia para el resampling.
+    operation : list
+        operación(es) para agregar los datos resampliandos.
+
+    Returns
+    -------
+    pandas DataFrame
+        serie lista para ocupar.
+
+    """
+    serie_ = pd.DataFrame(client.get_macro(serie=serie))
+    serie_['value'] = pd.to_numeric(serie_['value'], errors='coerce')
+    serie_['indexDateString'] = pd.to_datetime(serie_['indexDateString'], format='%d-%m-%Y')
+    serie_.set_index('indexDateString', inplace=True)
+    del serie_['statusCode']
+    
+    if resam is not None:
+        if operations is not None:
+            serie_ = serie_.resample(resam).agg(operations)
+            # renombrar las columnas
+            serie_.columns = ['_'.join(x) for x in serie_.columns]
+            return serie_
+        else:
+            print('Ocupar ')
+    else:
+        return serie_
+
+# Exportaciones de bienes (FOB) -> F068.B1.FLU.Z.0.C.N.Z.Z.Z.Z.6.0.M
+# Importaciones de bienes FOB (millones de dólares) -> F068.B1.FLU.Z.0.D.N.0.T.Z.Z.6.0.M
+exportaciones = cleaner('F068.B1.FLU.Z.0.C.N.Z.Z.Z.Z.6.0.M').to_period('M').to_timestamp('M')
+importaciones = cleaner('F068.B1.FLU.Z.0.D.N.0.T.Z.Z.6.0.M').to_period('M').to_timestamp('M')
+dolar = cleaner_dolar('F073.TCO.PRE.Z.D').resample('M').median().to_period('M').to_timestamp('M')
+
+tot = (exportaciones / importaciones) * 100
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax2 = ax.twinx()
+
+ax.plot(tot, color='tab:blue')
+ax2.plot(dolar.filter(items=tot.index, axis=0), color='tab:green')
+ax.grid(True, linestyle='--')
+fig.suptitle('Terminos de comercio en Chile (TOT) y su relación con el dólar (mediana mensual)', fontweight='bold')
+plt.title('TOT = Exportaciones / Importaciones, seguimiento anual (TTM)')
+ax.set_ylabel('Ratio (%)', color='tab:blue')
+ax.tick_params(axis='y', labelcolor='tab:blue')
+ax2.set_ylabel('Tipo de cambio del dólar, mediana mensual', color='tab:green')
+ax2.tick_params(labelcolor='tab:green')
+
+ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+
+# recesiones
+# hay que chequear si la accion existia en ese tiempo o no
+    # Subprime
+ax.axvspan(datestr2num('2007-12-01'), datestr2num('2009-06-30'), color='grey', alpha=0.5)
+    # Covid-19
+ax.axvspan(datestr2num('2020-01-01'), datestr2num('2020-04-30'), color='grey', alpha=0.5)
+
+ax.text(0.7, -0.12,  
+         "Las áreas sombreadas indican las recesiones de EEUU.", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black')
+
+# Graph source
+ax.text(0.2, -0.12,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+plt.show()
+
+fig, ax = plt.subplots(figsize=(10, 5))
+
+import statsmodels.api as sm
+cycle, trend = sm.tsa.filters.hpfilter(tot.dropna(), 1600*3**4)
+
+ax.plot(tot, color='tab:blue')
+ax.plot(trend, color='tab:orange')
+ax.grid(True, linestyle='--')
+ax.axhline(y=100, color='tab:red', linestyle='dashed')
+fig.suptitle('Terminos de comercio en Chile (TOT o Terms of Trade)', fontweight='bold')
+plt.title('TOT = Exportaciones / Importaciones, seguimiento anual (TTM)')
+
+ax.legend(['TOT', 'Filtro de Hodrick–Prescott', 'Paridad TOT'])
+ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+ax.set_ylabel('Ratio (%)')
+
+# recesiones
+# hay que chequear si la accion existia en ese tiempo o no
+    # Subprime
+ax.axvspan(datestr2num('2007-12-01'), datestr2num('2009-06-30'), color='grey', alpha=0.5)
+    # Covid-19
+ax.axvspan(datestr2num('2020-01-01'), datestr2num('2020-04-30'), color='grey', alpha=0.5)
+
+ax.text(0.7, -0.12,  
+         "Las áreas sombreadas indican las recesiones de EEUU.", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black')
+
+# Graph source
+ax.text(0.2, -0.12,  
+         "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+plt.show()
+
+# Relación entre el dolar y el TOT
+index_to_follow = tot.dropna().index
+tot = tot.dropna().values.flatten()
+dolar = dolar.filter(items=index_to_follow, axis=0).values.flatten()
+
+fig, ax = plt.subplots(figsize=(10, 5))
+
+# calculando la regresion (x=desempleo, y=inflacion)
+modelo = np.poly1d(np.polyfit(dolar, tot, 1))
+# Calculando el R2
+from sklearn.metrics import r2_score
+r_2 = r2_score(tot, modelo(dolar))
+
+ax.scatter(dolar, tot, color='tab:blue')
+ax.plot(dolar, modelo(dolar), color='tab:orange')
+fig.suptitle('Relación entre los terminos de comercio (TOT) y el precio del dólar', fontweight='bold')
+plt.title('Datos desde Enero 2003 hasta el dato más reciente')
+ax.set_ylabel('Terms of Trade (Terminos de Comercio) de Chile')
+ax.set_xlabel('Tipo de cambio del dólar, mediana mensual')
+ax.text(0.8, 0.8,  
+         r"$R^{2} = $" + f"{round(r_2,2)}", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=24, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+# Graph source
+ax.text(0.2, -0.17,  
          "Fuente: Banco Central de Chile   Gráfico: Lautaro Parada", 
          horizontalalignment='center',
          verticalalignment='center', 
