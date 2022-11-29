@@ -257,3 +257,11 @@ pib_ = float(
     )
 
 reinvested_rate = pib_ / roc
+
+#%% Paso 4: calcular el valor de los activos operativos
+# Calcular la proyeccion de ingresos operacionales normalizados 
+normalized_op_income = ebitda_margin * inc_['totalRevenue'][-1]
+
+value_op_assets = (normalized_op_income * (1+pib_)*(1-tasa_impuestos)*(1-reinvested_rate)) / (cost_of_capital - pib_)
+
+#%%
