@@ -16,6 +16,7 @@ from bcch import BancoCentralDeChile
 from eod import EodHistoricalData
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import warnings
 import requests
 warnings.filterwarnings('ignore')
@@ -26,9 +27,8 @@ client_bcch = BancoCentralDeChile(bcch_user, bcch_pwd)
 
 # Datos referenciales para todo el script
 stock = 'CMPC.SN'
-commodity_referencia = 'LB.COMM' 
-indice_mercado = 'SPIPSA.INDX' # IPSA
-years_forecast = 5
+indice_mercado = 'F013.IBC.IND.N.7.LAC.CL.CLP.BLO.D' # IPSA
+years_forecast = 4
 exchange = stock[stock.index('.'):][1:] # extraer el exchange de la accion
 
 def fundamental_caller(stock_ticker:str, filter_:str, delete_extras:bool=True, resample_:bool=False):
@@ -190,13 +190,50 @@ mercado_roe = []
 mercado_pb = []
 
 # iterar por cada accion para extraer los datos fundamentales del mercado
-for stock, _ in market_fundamentals.items():
+for stock_, _ in market_fundamentals.items():
     # Solo extraer compañias denominadas en pesos chilenos
-    if market_fundamentals[stock]['General']['CurrencyCode'] == 'CLP':
-        mercado_roe.append(market_fundamentals[stock]['Highlights']['ReturnOnEquityTTM'])
+    if market_fundamentals[stock_]['General']['CurrencyCode'] == 'CLP':
+        mercado_roe.append(market_fundamentals[stock_]['Highlights']['ReturnOnEquityTTM'])
         
-# Solicitando los precios del commodity asociado a la empresa
-commodity_prices = price_normalizer(
-    client.get_prices_eod(commodity_referencia)
-    ).resample('Q').median()
-        
+precios_indice_mercado = cleaner_macro_valorizacion(indice_mercado).dropna()
+
+#%% Paso 1: margenes operacionales antes de impuestos (EBITDA margin)
+
+ebitda = inc_['netIncome'] + inc_['depreciationAndAmortization'] +\
+    inc_['interestExpense'] + inc_['incomeTaxExpense']
+
+ebitda_margin = (ebitda / inc_['totalRevenue']).mean()
+
+#%% Paso 2: Estimar la tasa de costo de capital
+import fredpy as fp
+fp.api_key = '97314157aa982d413b0388ed05758cbb'
+
+beta_estadistico = stock_fundamentals['Technicals']['Beta']
+# retornos mensuales anualizados
+r_e = float(
+    precios_indice_mercado.resample('M').mean().pct_change().dropna().mean().values * 12
+    )
+# Bono de gobierno a 10 años - EE.UU.
+r_f_us = float(cleaner_macro_valorizacion('F019.TBG.TAS.10.D').dropna().rolling(window=20).mean().iloc[-1]) / 100
+# Expectativas de inflación en 11 meses (variación 12 meses, mediana)
+exp_inf_cl = float(cleaner_macro_valorizacion('F089.IPC.V12.14.M').iloc[-1]) / 100
+# 1-Year Expected Inflation -> https://fred.stlouisfed.org/series/EXPINF1YR
+exp_inf_us = float(fp.series('EXPINF1YR').data.iloc[-1]) / 100
+
+# Tasa libre de riesgo local transformada
+# pagina 159 libro damodoran
+r_f = ((1+r_f_us) * ((1+exp_inf_cl) / (1+exp_inf_us))) - 1
+
+equity_risk_premium = r_e - r_f
+
+cost_of_equity = r_f + beta_estadistico * equity_risk_premium
+
+total_debt = (bs_['shortTermDebt'] + bs_['longTermDebt'] + bs_['shortLongTermDebt'])[-1]
+total_equity_ = stock_fundamentals['Highlights']['MarketCapitalization']
+de = (total_debt / total_equity_)*100
+
+# Calculado el costo de capital para la firma
+# Spread EMBI Chile (promedio, puntos base)
+spread_chile = float(cleaner_macro_valorizacion('F019.SPS.PBP.91.D').dropna().rolling(window=20).mean().iloc[-1]) / 10000
+cost_of_debt = r_f + spread_chile
+cost_of_capital = cost_of_equity * (1 - de) + cost_of_debt * (1-0.27) * de
