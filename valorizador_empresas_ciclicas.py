@@ -29,6 +29,7 @@ client_bcch = BancoCentralDeChile(bcch_user, bcch_pwd)
 stock = 'CMPC.SN'
 indice_mercado = 'F013.IBC.IND.N.7.LAC.CL.CLP.BLO.D' # IPSA
 years_forecast = 4
+tasa_impuestos = 0.27
 exchange = stock[stock.index('.'):][1:] # extraer el exchange de la accion
 
 def fundamental_caller(stock_ticker:str, filter_:str, delete_extras:bool=True, resample_:bool=False):
@@ -236,4 +237,22 @@ de = total_debt / total_equity_
 # Spread EMBI Chile (promedio, puntos base)
 spread_chile = float(cleaner_macro_valorizacion('F019.SPS.PBP.91.D').dropna().rolling(window=20).mean().iloc[-1]) / 10000
 cost_of_debt = r_f + spread_chile
-cost_of_capital = cost_of_equity * (1 - de) + cost_of_debt * (1-0.27) * de
+cost_of_capital = cost_of_equity * (1 - de) + cost_of_debt * (1-tasa_impuestos) * de
+
+#%% Paso 3: Estimar la tasa de reinversión
+# Calculando el ROC
+# https://www.youtube.com/watch?v=c5iigcEppZw&t=82s
+nopat = (inc_['ebit'] * (1-tasa_impuestos))[-1]
+roc = nopat / bs_['netInvestedCapital'][-1]
+
+
+# Tasa de crecimiento perpetuo
+# PIB, volumen a precios del año anterior encadenado, referencia 2018 (miles de millones de pesos encadenados)
+pib_ = cleaner_macro_valorizacion('F032.PIB.FLU.R.CLP.EP18.Z.Z.0.T').pct_change().dropna()
+        
+# El último dato es el que importa
+import statsmodels.api as sm
+cycle, trend = sm.tsa.filters.hpfilter(pib_, 1600)
+perpetual_growth_rate = trend.values[-1] / 100
+
+reinvested_rate = perpetual_growth_rate / roc
