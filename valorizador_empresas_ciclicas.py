@@ -25,10 +25,18 @@ warnings.filterwarnings('ignore')
 client = EodHistoricalData(api_key)
 client_bcch = BancoCentralDeChile(bcch_user, bcch_pwd)
 
+"""
+Empresas a valorar en el articulo
+- Alimentos(salmon) -> BLUMAR O CAMANCHACA
+- Quimicos y Litio -> SQM
+- Fruticola -> HF
+- Celulosa y Forestas -> CMPC
+- Bebidas -> CONCHATORO
+"""
+
 # Datos referenciales para todo el script
-stock = 'CMPC.SN'
+stock = 'SQM.US'
 indice_mercado = 'F013.IBC.IND.N.7.LAC.CL.CLP.BLO.D' # IPSA
-years_forecast = 4
 tasa_impuestos = 0.27
 exchange = stock[stock.index('.'):][1:] # extraer el exchange de la accion
 
@@ -264,7 +272,7 @@ normalized_op_income = ebitda_margin * inc_['totalRevenue'][-1]
 
 value_op_assets = (normalized_op_income * (1+pib_)*(1-tasa_impuestos)*(1-reinvested_rate)) / (cost_of_capital - pib_)
 
-#%% Paso 4: Valor por accion
+#%% Paso 5: Valor por accion
 
 # Calculo de las acciones circulantes
 
@@ -284,3 +292,15 @@ non_op_assets = bs_['otherAssets'][-1]
 minority_interest = bs_['noncontrollingInterestInConsolidatedEntity'][-1]
 
 value_per_share = (value_op_assets + cash + non_op_assets - total_debt - minority_interest) / available_shares
+
+#%% Tests
+
+precio_mercado_accion = price_normalizer(
+    client.get_prices_eod(stock)
+    ).close.iloc[-1]
+
+if value_per_share > precio_mercado_accion:
+    print(f"{stock_fundamentals['General']['Name']} cotiza por DEBAJO de la estimación de valor ({porcentaje_accion(value_per_share, precio_mercado_accion)}%)")
+else:
+    print(f"{stock_fundamentals['General']['Name']} cotiza por SOBRE de la estimación de valor ({porcentaje_accion(precio_mercado_accion, value_per_share)}%)")
+
