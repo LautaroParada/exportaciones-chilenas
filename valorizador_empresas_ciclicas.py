@@ -230,7 +230,7 @@ cost_of_equity = r_f + beta_estadistico * equity_risk_premium
 
 total_debt = (bs_['shortTermDebt'] + bs_['longTermDebt'] + bs_['shortLongTermDebt'])[-1]
 total_equity_ = stock_fundamentals['Highlights']['MarketCapitalization']
-de = (total_debt / total_equity_)*100
+de = total_debt / total_equity_
 
 # Calculado el costo de capital para la firma
 # Spread EMBI Chile (promedio, puntos base)
