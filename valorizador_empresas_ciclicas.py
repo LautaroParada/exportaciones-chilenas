@@ -242,17 +242,18 @@ cost_of_capital = cost_of_equity * (1 - de) + cost_of_debt * (1-tasa_impuestos) 
 #%% Paso 3: Estimar la tasa de reinversión
 # Calculando el ROC
 # https://www.youtube.com/watch?v=c5iigcEppZw&t=82s
-nopat = (inc_['ebit'] * (1-tasa_impuestos))[-1]
-roc = nopat / bs_['netInvestedCapital'][-1]
+# https://research-doc.credit-suisse.com/docView?language=ENG&format=PDF&sourceid=csplusresearchcp&document_id=806230540&serialid=dBve3cH%2BHSFm1zoXnWVgkwZUHD2g0c1RqyUyHTE3o%2BM%3D&cspId=null
+nopat = inc_['ebit'] * (1-tasa_impuestos)
+invested_capital = (bs_['netReceivables'] + bs_['inventory'] - bs_['accountsPayable']) +\
+    bs_['propertyPlantAndEquipmentNet'] + bs_['goodWill'] + bs_['otherAssets']
+    
+roc = (nopat / invested_capital)[-1]
 
 
 # Tasa de crecimiento perpetuo
 # PIB, volumen a precios del año anterior encadenado, referencia 2018 (miles de millones de pesos encadenados)
-pib_ = cleaner_macro_valorizacion('F032.PIB.FLU.R.CLP.EP18.Z.Z.0.T').pct_change().dropna()
-        
-# El último dato es el que importa
-import statsmodels.api as sm
-cycle, trend = sm.tsa.filters.hpfilter(pib_, 1600)
-perpetual_growth_rate = trend.values[-1] / 100
+pib_ = float(
+    cleaner_macro_valorizacion('F032.PIB.FLU.R.CLP.EP18.Z.Z.0.T').pct_change().rolling(window=16).median().iloc[-1].values
+    )
 
-reinvested_rate = perpetual_growth_rate / roc
+reinvested_rate = pib_ / roc
