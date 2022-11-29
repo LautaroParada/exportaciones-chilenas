@@ -264,4 +264,23 @@ normalized_op_income = ebitda_margin * inc_['totalRevenue'][-1]
 
 value_op_assets = (normalized_op_income * (1+pib_)*(1-tasa_impuestos)*(1-reinvested_rate)) / (cost_of_capital - pib_)
 
-#%%
+#%% Paso 4: Valor por accion
+
+# Calculo de las acciones circulantes
+
+try:
+    available_shares = client.get_fundamental_equity(stock, filter_='outstandingShares::quarterly')['0']['shares']
+    available_shares_ = client.get_fundamental_equity(stock, filter_='SharesStats::SharesOutstanding')
+    
+    if available_shares > 0 and available_shares_ > 0:
+        available_shares = min(available_shares, available_shares_)
+        del available_shares_
+except:
+    available_shares = client.get_fundamental_equity(stock, filter_='SharesStats::SharesOutstanding')
+
+cash = bs_['cashAndEquivalents'][-1]
+non_op_assets = bs_['otherAssets'][-1]
+# https://www.investopedia.com/terms/n/noncontrolling_interest.asp#:~:text=Key%20Takeaways-,A%20non%2Dcontrolling%20interest%2C%20also%20known%20as%20a%20minority%20interest,decisions%20or%20votes%20by%20themselves.
+minority_interest = bs_['noncontrollingInterestInConsolidatedEntity'][-1]
+
+value_per_share = (value_op_assets + cash + non_op_assets - total_debt - minority_interest) / available_shares
