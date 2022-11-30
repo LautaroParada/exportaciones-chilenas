@@ -306,8 +306,7 @@ nopat = inc_['ebit'] * (1-tasa_impuestos)
 invested_capital = (bs_['netReceivables'] + bs_['inventory'] - bs_['accountsPayable']) +\
     bs_['propertyPlantAndEquipmentNet'] + bs_['goodWill'] + bs_['otherAssets']
     
-roc = (nopat / invested_capital)[-1]
-
+roc = np.mean(nopat / invested_capital)
 
 # Tasa de crecimiento perpetuo
 # PIB, volumen a precios del año anterior encadenado, referencia 2018 (miles de millones de pesos encadenados)
