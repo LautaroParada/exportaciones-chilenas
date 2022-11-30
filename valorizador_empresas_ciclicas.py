@@ -35,7 +35,7 @@ Empresas a valorar en el articulo
 """
 
 # Datos referenciales para todo el script
-stock = 'CCU.SN'
+stock = 'SQM-B.SN'
 indice_mercado = 'F013.IBC.IND.N.7.LAC.CL.CLP.BLO.D' # IPSA
 tasa_impuestos = 0.27
 exchange = stock[stock.index('.'):][1:] # extraer el exchange de la accion
@@ -350,7 +350,7 @@ if stock_fundamentals['Financials']['Income_Statement']['currency_symbol'] == 'U
         client.get_prices_eod('USDCLP.FOREX')
         ).close.rolling(
             window=20
-            ).mean()[-1]
+            ).median()[-1]
     value_per_share_clp = usdclp * value_per_share
 
 #%% Tests
@@ -364,12 +364,16 @@ if stock_fundamentals['Financials']['Income_Statement']['currency_symbol'] == 'U
         print(f"{stock_fundamentals['General']['Name']} cotiza por DEBAJO de la estimación de valor ({porcentaje_accion(value_per_share_clp, precio_mercado_accion)}%)")
     else:
         print(f"{stock_fundamentals['General']['Name']} cotiza por SOBRE de la estimación de valor ({porcentaje_accion(precio_mercado_accion, value_per_share_clp)}%)")
+        
+    valor_instrinsico = value_per_share_clp
 
 else:
     if value_per_share > precio_mercado_accion:
         print(f"{stock_fundamentals['General']['Name']} cotiza por DEBAJO de la estimación de valor ({porcentaje_accion(value_per_share, precio_mercado_accion)}%)")
     else:
         print(f"{stock_fundamentals['General']['Name']} cotiza por SOBRE de la estimación de valor ({porcentaje_accion(precio_mercado_accion, value_per_share)}%)")
+        
+    valor_instrinsico = value_per_share
 
 
 #%% Graficos
@@ -392,3 +396,62 @@ try:
     analyst_target = stock_fundamentals['AnalystRatings']['TargetPrice']
 except:
     analyst_target = 0
+    
+# Grafico de valorización y analisis de sensibilidad
+fig, ax = plt.subplots(figsize=(10, 5))
+estados = ('Current\nprice', 'Intrinsic\nValue', 'Wall Street\nprice', 'Analysts\ntarget')
+y_pos = np.arange(len(estados))
+precios = np.array([precio_mercado_accion, valor_instrinsico, wall_street_price, analyst_target])
+
+ax.barh(y_pos, precios, align='center', color='black')
+ax.set_yticks(y_pos, labels=estados)
+ax.invert_yaxis()  # labels read top-to-bottom
+ax.set_xlabel(f"{nombre_moneda} ({codigo_moneda})")
+
+fig.suptitle('Current price vs intrinsic value', fontweight='bold')
+plt.title(f"What is the intrinsic value of {stock[:stock.index('.')]} when looking at its future cash flows?")
+
+# Rangos de sensibilidad
+# antes se evalua cual precio es mayor para el limite superior
+if precio_mercado_accion > valor_instrinsico:
+    precio_mayor = precio_mercado_accion
+    precio_menor = valor_instrinsico
+else:
+    precio_mayor = valor_instrinsico
+    precio_menor = precio_mercado_accion
+    
+# Subvalorado
+ax.axvspan(0, valor_instrinsico*0.8, alpha=0.5, color='forestgreen')
+# Valor justo
+ax.axvspan(valor_instrinsico*0.8, valor_instrinsico*1.2, alpha=0.5, color='gold')
+# Sobrevalorado
+ax.axvspan(valor_instrinsico*1.2, precio_mayor*1.4, alpha=0.5, color='darkred')
+
+# Graph source
+ax.text(0.15, -0.12,  
+         "Source: EOD Historical Data   Chart: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+ax.text(0.8, -0.12,  
+         "Methodology: Free cash flow to equity valuation model.", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black')
+
+plt.show()
+
+#  Bellow Fair Value
+if precio_mercado_accion > valor_instrinsico * 1.2:
+    print(f"{stock[:stock.index('.')]} ({codigo_moneda}${round(precio_mercado_accion, 2)}) cotiza por SOBRE mi estimación de valor justo ({codigo_moneda}${round(valor_instrinsico, 2)})")
+elif (precio_mercado_accion >= valor_instrinsico * 0.8) & (precio_mercado_accion <= valor_instrinsico * 1.2):
+    print(f"{stock[:stock.index('.')]} ({codigo_moneda}${round(precio_mercado_accion, 2)}) cotiza DENTRO de mi estimación de valor justo ({codigo_moneda}${round(valor_instrinsico, 2)})")
+elif precio_mercado_accion < valor_instrinsico * 0.8:
+    print(f"{stock[:stock.index('.')]} ({codigo_moneda}${round(precio_mercado_accion, 2)}) cotiza por DEBAJO de mi estimación de valor justo ({codigo_moneda}${round(valor_instrinsico, 2)})")
+
