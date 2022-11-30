@@ -35,7 +35,7 @@ Empresas a valorar en el articulo
 """
 
 # Datos referenciales para todo el script
-stock = 'CMPC.SN'
+stock = 'SQM-B.SN'
 indice_mercado = 'F013.IBC.IND.N.7.LAC.CL.CLP.BLO.D' # IPSA
 tasa_impuestos = 0.27
 exchange = stock[stock.index('.'):][1:] # extraer el exchange de la accion
@@ -331,7 +331,7 @@ try:
     available_shares_ = client.get_fundamental_equity(stock, filter_='SharesStats::SharesOutstanding')
     
     if available_shares > 0 and available_shares_ > 0:
-        available_shares = min(available_shares, available_shares_)
+        available_shares = max(available_shares, available_shares_)
         del available_shares_
 except:
     available_shares = client.get_fundamental_equity(stock, filter_='SharesStats::SharesOutstanding')
@@ -343,14 +343,360 @@ minority_interest = bs_['noncontrollingInterestInConsolidatedEntity'][-1]
 
 value_per_share = (value_op_assets + cash + non_op_assets - total_debt - minority_interest) / available_shares
 
+# Transformando a CLP si es que el balance está en dolares
+if stock_fundamentals['Financials']['Income_Statement']['currency_symbol'] == 'USD':
+    # solicitar datos del tipo de cambio oficial -> Promedio mensual movil
+    usdclp = price_normalizer(
+        client.get_prices_eod('USDCLP.FOREX')
+        ).close.rolling(
+            window=20
+            ).median()[-1]
+    value_per_share_clp = usdclp * value_per_share
+
 #%% Tests
 
 precio_mercado_accion = price_normalizer(
     client.get_prices_eod(stock)
     ).close.iloc[-1]
 
-if value_per_share > precio_mercado_accion:
-    print(f"{stock_fundamentals['General']['Name']} cotiza por DEBAJO de la estimación de valor ({porcentaje_accion(value_per_share, precio_mercado_accion)}%)")
-else:
-    print(f"{stock_fundamentals['General']['Name']} cotiza por SOBRE de la estimación de valor ({porcentaje_accion(precio_mercado_accion, value_per_share)}%)")
+if stock_fundamentals['Financials']['Income_Statement']['currency_symbol'] == 'USD':
+    if value_per_share_clp > precio_mercado_accion:
+        print(f"{stock_fundamentals['General']['Name']} cotiza por DEBAJO de la estimación de valor ({porcentaje_accion(value_per_share_clp, precio_mercado_accion)}%)")
+    else:
+        print(f"{stock_fundamentals['General']['Name']} cotiza por SOBRE de la estimación de valor ({porcentaje_accion(precio_mercado_accion, value_per_share_clp)}%)")
+        
+    valor_instrinsico = value_per_share_clp
 
+else:
+    if value_per_share > precio_mercado_accion:
+        print(f"{stock_fundamentals['General']['Name']} cotiza por DEBAJO de la estimación de valor ({porcentaje_accion(value_per_share, precio_mercado_accion)}%)")
+    else:
+        print(f"{stock_fundamentals['General']['Name']} cotiza por SOBRE de la estimación de valor ({porcentaje_accion(precio_mercado_accion, value_per_share)}%)")
+        
+    valor_instrinsico = value_per_share
+
+
+#%% Graficos
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
+# Grafico del DCF
+# Extraer la moneda de la accion
+nombre_moneda = client.get_fundamental_equity(stock, filter_='General::CurrencyName')
+codigo_moneda = client.get_fundamental_equity(stock, filter_='General::CurrencyCode')
+
+# ratings de Wall Street
+try:
+    wall_street_price = stock_fundamentals['Highlights']['WallStreetTargetPrice']
+except:
+    wall_street_price = 0
+    
+# Analistas
+try:
+    analyst_target = stock_fundamentals['AnalystRatings']['TargetPrice']
+except:
+    analyst_target = 0
+    
+# Grafico de valorización y analisis de sensibilidad
+fig, ax = plt.subplots(figsize=(10, 5))
+estados = ('Precio\nactual', 'Valor\nIntrínseco', 'Wall\nStreet', 'Objetivo\nAnalistas')
+y_pos = np.arange(len(estados))
+precios = np.array([precio_mercado_accion, valor_instrinsico, wall_street_price, analyst_target])
+
+ax.barh(y_pos, precios, align='center', color='black')
+ax.set_yticks(y_pos, labels=estados)
+ax.invert_yaxis()  # labels read top-to-bottom
+ax.set_xlabel(f"{nombre_moneda} ({codigo_moneda})")
+
+fig.suptitle('Precio actual vs Valor Intrínseco', fontweight='bold')
+plt.title(f"¿Cuál es el valor intrínseco de {stock[:stock.index('.')]} al observar sus flujos de caja futuros?")
+
+# Rangos de sensibilidad
+# antes se evalua cual precio es mayor para el limite superior
+if precio_mercado_accion > valor_instrinsico:
+    precio_mayor = precio_mercado_accion
+    precio_menor = valor_instrinsico
+else:
+    precio_mayor = valor_instrinsico
+    precio_menor = precio_mercado_accion
+    
+# Subvalorado
+ax.axvspan(0, valor_instrinsico*0.8, alpha=0.5, color='forestgreen')
+# Valor justo
+ax.axvspan(valor_instrinsico*0.8, valor_instrinsico*1.2, alpha=0.5, color='gold')
+# Sobrevalorado
+ax.axvspan(valor_instrinsico*1.2, precio_mayor*1.4, alpha=0.5, color='darkred')
+
+# Graph source
+ax.text(0.15, -0.12,  
+         "Fuente: EOD Historical Data   Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+ax.text(0.8, -0.12,  
+         "Metologia: DCF por Aswath Damodaran", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black')
+
+plt.show()
+
+#  Bellow Fair Value
+if precio_mercado_accion > valor_instrinsico * 1.2:
+    print(f"{stock[:stock.index('.')]} ({codigo_moneda}${round(precio_mercado_accion, 2)}) cotiza por SOBRE mi estimación de valor justo ({codigo_moneda}${round(valor_instrinsico, 2)})")
+elif (precio_mercado_accion >= valor_instrinsico * 0.8) & (precio_mercado_accion <= valor_instrinsico * 1.2):
+    print(f"{stock[:stock.index('.')]} ({codigo_moneda}${round(precio_mercado_accion, 2)}) cotiza DENTRO de mi estimación de valor justo ({codigo_moneda}${round(valor_instrinsico, 2)})")
+elif precio_mercado_accion < valor_instrinsico * 0.8:
+    print(f"{stock[:stock.index('.')]} ({codigo_moneda}${round(precio_mercado_accion, 2)}) cotiza por DEBAJO de mi estimación de valor justo ({codigo_moneda}${round(valor_instrinsico, 2)})")
+
+#%% Price to Earnings
+
+# Trailing Price to Earnings
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.hist(industry_pe, bins=21, color='dimgray')
+ax.axvline(x=stock_pe, color='navy', linestyle='solid', linewidth=5)
+ax.axvline(x=np.median(industry_pe), color='gold', linestyle='solid', linewidth=5)
+# Subvalorado
+ax.axvspan(np.min(industry_pe), np.median(industry_pe)*0.99, alpha=0.5, color='forestgreen')
+# Sobrevalorado
+ax.axvspan(np.median(industry_pe)*1.01, np.max(industry_pe), alpha=0.5, color='darkred')
+
+fig.suptitle("Relación precio-beneficio (PE) vs el Sector", fontweight='bold')
+plt.title(f"¿Cómo se compara el PE de {stock[:stock.index('.')]} vs con otras empresas del sector {stock_industry}?")
+ax.set_ylabel('Número de compañias')
+
+ax.text(0.15, -0.12,  
+         "Fuente: End Of Day Historical data    Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+ax.text(0.7, -0.12,  
+         "Azul = PE Compañia | Amarillo = Mediana sector", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black')
+
+plt.show()
+
+#%% Price to book
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.hist(mercado_pb, bins=21, color='dimgray')
+ax.axvline(x=stock_pb, color='navy', linestyle='solid', linewidth=5)
+ax.axvline(x=np.median(mercado_pb), color='gold', linestyle='solid', linewidth=5)
+# Subvalorado
+ax.axvspan(np.min(mercado_pb), np.median(mercado_pb)*0.99, alpha=0.5, color='forestgreen')
+# Sobrevalorado
+ax.axvspan(np.median(mercado_pb)*1.01, np.max(mercado_pb), alpha=0.5, color='darkred')
+
+fig.suptitle("Relación precio-valor contable (PB) vs el Sector ", fontweight='bold')
+plt.title(f"¿Cómo se compara el PB de {stock[:stock.index('.')]} vs con otras empresas del sector {stock_industry}?")
+ax.set_ylabel('Número de compañias')
+
+ax.text(0.15, -0.12,  
+         "Fuente: End Of Day Historical data    Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+ax.text(0.7, -0.12,  
+         "Azul = PE Compañia | Amarillo = Mediana sector", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black')
+
+plt.show()
+
+#%% Trailing Price to Sales
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.hist(industry_ps, bins=21, color='dimgray')
+ax.axvline(x=stock_ps, color='navy', linestyle='solid', linewidth=5)
+ax.axvline(x=np.median(industry_ps), color='gold', linestyle='solid', linewidth=5)
+# Subvalorado
+ax.axvspan(np.min(industry_ps), np.median(industry_ps)*0.99, alpha=0.5, color='forestgreen')
+# Sobrevalorado
+ax.axvspan(np.median(industry_ps)*1.01, np.max(industry_ps), alpha=0.5, color='darkred')
+
+fig.suptitle("Relación precio/ventas (PS) vs el Sector", fontweight='bold')
+plt.title(f"¿Cómo se compara el PS de {stock[:stock.index('.')]} vs con otras empresas del sector {stock_industry}?")
+ax.set_ylabel('Número de compañias')
+
+ax.text(0.15, -0.12,  
+         "Fuente: End Of Day Historical data    Gráfico: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+ax.text(0.7, -0.12,  
+         "Azul = PE Compañia | Amarillo = Mediana sector", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black')
+
+plt.show()
+
+#%% PEG
+
+from matplotlib import cm
+
+from matplotlib.patches import Circle, Wedge, Rectangle
+def degree_range(n): 
+    start = np.linspace(0,180,n+1, endpoint=True)[0:-1]
+    end = np.linspace(0,180,n+1, endpoint=True)[1::]
+    mid_points = start + ((end-start)/2.)
+    return np.c_[start, end], mid_points
+
+def rot_text(ang): 
+    rotation = np.degrees(np.radians(ang) * np.pi / np.pi - np.radians(90))
+    return rotation
+
+def gauge(labels=['BAJO','MEDIO','ALTO','MUY ALTO','EXTREMO'], \
+          colors='jet_r', arrow=1, title='', fname=False): 
+    
+    """
+    some sanity checks first
+    
+    """
+    
+    N = len(labels)
+    
+    if arrow > N: 
+        raise Exception("\n\nThe category ({}) is greated than \
+        the length\nof the labels ({})".format(arrow, N))
+ 
+    
+    """
+    if colors is a string, we assume it's a matplotlib colormap
+    and we discretize in N discrete colors 
+    """
+    
+    if isinstance(colors, str):
+        cmap = cm.get_cmap(colors, N)
+        cmap = cmap(np.arange(N))
+        colors = cmap[::-1,:].tolist()
+    if isinstance(colors, list): 
+        if len(colors) == N:
+            colors = colors[::-1]
+        else: 
+            raise Exception("\n\nnumber of colors {} not equal \
+            to number of categories{}\n".format(len(colors), N))
+
+    """
+    begins the plotting
+    """
+    
+    fig, ax = plt.subplots()
+
+    ang_range, mid_points = degree_range(N)
+
+    labels = labels[::-1]
+    
+    """
+    plots the sectors and the arcs
+    """
+    patches = []
+    for ang, c in zip(ang_range, colors): 
+        # sectors
+        patches.append(Wedge((0.,0.), .4, *ang, facecolor='w', lw=2))
+        # arcs
+        patches.append(Wedge((0.,0.), .4, *ang, width=0.10, facecolor=c, lw=2, alpha=0.5))
+    
+    [ax.add_patch(p) for p in patches]
+
+    
+    """
+    set the labels (e.g. 'LOW','MEDIUM',...)
+    """
+
+    for mid, lab in zip(mid_points, labels): 
+
+        ax.text(0.35 * np.cos(np.radians(mid)), 0.35 * np.sin(np.radians(mid)), lab, \
+            horizontalalignment='center', verticalalignment='center', fontsize=14, \
+            fontweight='bold', rotation = rot_text(mid))
+
+    """
+    set the bottom banner and the title
+    """
+    r = Rectangle((-0.4,-0.1),0.8,0.1, facecolor='w', lw=2)
+    ax.add_patch(r)
+    
+    ax.text(0, -0.05, title, horizontalalignment='center', \
+         verticalalignment='center', fontsize=22, fontweight='bold')
+
+    """
+    plots the arrow now
+    """
+    
+    pos = mid_points[abs(arrow - N)]
+    
+    ax.arrow(0, 0, 0.225 * np.cos(np.radians(pos)), 0.225 * np.sin(np.radians(pos)), \
+                 width=0.04, head_width=0.09, head_length=0.1, fc='k', ec='k')
+    
+    ax.add_patch(Circle((0, 0), radius=0.02, facecolor='k'))
+    ax.add_patch(Circle((0, 0), radius=0.01, facecolor='w', zorder=11))
+
+    """
+    removes frame and ticks, and makes axis equal and tight
+    """
+    
+    ax.set_frame_on(False)
+    ax.axes.set_xticks([])
+    ax.axes.set_yticks([])
+    ax.axis('equal')
+    plt.tight_layout()
+    if fname:
+        fig.savefig(fname, dpi=200)
+    
+    
+    # Graph source
+    ax.text(0.3, 0.03,  
+             "Fuente: End Of Day Historical data    Gráfico: Lautaro Parada", 
+             horizontalalignment='center',
+             verticalalignment='center', 
+             transform=ax.transAxes, 
+             fontsize=8, 
+             color='black',
+             bbox=dict(facecolor='tab:gray', alpha=0.5))
+    
+try:
+    # https://www.investopedia.com/ask/answers/06/pegratioearningsgrowthrate.asp#:~:text=The%20price%2Fearnings%20to%20growth,by%20its%20percentage%20growth%20rate.
+    # Eliminar los datos iniciales del TTM y luego calcular el promedio movil de 4 periodos (anual)
+    eps_growth = inc_.drop(inc_[inc_.netIncome == 0].index).netIncome.pct_change().rolling(window=4).mean()[-1]
+    peg = stock_pe / (eps_growth*100)
+    # considerar la categoria del peg
+    if peg > 0 and peg < 0.5:
+        arrow_ = 1
+    elif peg >= 0.5 and peg < 1:
+        arrow_ = 2
+    elif peg >= 1 and peg < 1.5:
+        arrow_ = 3
+    elif peg >= 1.5:
+        arrow_ = 4
+    # graficar 
+    gauge(labels=['BAJO','MEDIO','ALTO','EXTREMO'], \
+      colors=['#007A00','#0063BF','#FFCC00','#ED1C24'], arrow=arrow_, title=f"Ratio PEG para {stock[:stock.index('.')]}") 
+
+except:
+    print("No se pudo calcular el PEG")
