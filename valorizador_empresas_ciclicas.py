@@ -35,7 +35,7 @@ Empresas a valorar en el articulo
 """
 
 # Datos referenciales para todo el script
-stock = 'SQM.US'
+stock = 'CMPC.SN'
 indice_mercado = 'F013.IBC.IND.N.7.LAC.CL.CLP.BLO.D' # IPSA
 tasa_impuestos = 0.27
 exchange = stock[stock.index('.'):][1:] # extraer el exchange de la accion
@@ -193,16 +193,67 @@ market_fundamentals = bulk_fundamental(market=exchange, offset=0)
 # Caso empresa
 stock_roe = stock_fundamentals['Highlights']['ReturnOnEquityTTM']
 stock_pb = stock_fundamentals['Valuation']['PriceBookMRQ']
+stock_pe = stock_fundamentals['Valuation']['TrailingPE']
+stock_forward_pe = stock_fundamentals['Valuation']['ForwardPE']
+stock_ps = stock_fundamentals['Valuation']['PriceSalesTTM']
+stock_ev_ebitda = stock_fundamentals['Valuation']['EnterpriseValueEbitda']
+stock_yield = stock_fundamentals['Highlights']['DividendYield']
+stock_peg = stock_fundamentals['Highlights']['PEGRatio']
+stock_op_margin = stock_fundamentals['Highlights']['OperatingMarginTTM']
+# Industria de la acción
+stock_industry = stock_fundamentals['General']['Sector']
+
+# Caso industry
+industry_roe = []
+industry_pb = []
+industry_pe = []
+industry_forward_pe = []
+industry_ps = []
+industry_ev_ebitda = []
+industry_yield = []
+industry_peg = []
+industry_op_margin = []
 
 # Caso mercado
 mercado_roe = []
 mercado_pb = []
+mercado_pe = []
+mercado_forward_pe = []
+mercado_ps = []
+mercado_ev_ebitda = []
+mercado_yield = []
+mercado_peg = []
+mercado_op_margin = []
 
-# iterar por cada accion para extraer los datos fundamentales del mercado
+# iterar por cada accion para extraer los datos fundamentales del MERCADO
 for stock_, _ in market_fundamentals.items():
     # Solo extraer compañias denominadas en pesos chilenos
     if market_fundamentals[stock_]['General']['CurrencyCode'] == 'CLP':
         mercado_roe.append(market_fundamentals[stock_]['Highlights']['ReturnOnEquityTTM'])
+        mercado_pb.append(market_fundamentals[stock_]['Valuation']['PriceBookMRQ'])
+        mercado_pe.append(market_fundamentals[stock_]['Valuation']['TrailingPE'])
+        mercado_forward_pe.append(market_fundamentals[stock_]['Valuation']['ForwardPE'])
+        mercado_ps.append(market_fundamentals[stock_]['Valuation']['PriceSalesTTM'])
+        mercado_ev_ebitda.append(market_fundamentals[stock_]['Valuation']['EnterpriseValueEbitda'])
+        mercado_yield.append(market_fundamentals[stock_]['Highlights']['DividendYield'])
+        mercado_peg.append(market_fundamentals[stock_]['Highlights']['PEGRatio'])
+        mercado_op_margin.append(market_fundamentals[stock_]['Highlights']['OperatingMarginTTM'])
+        
+# iterar por cada accion para extraer los datos fundamentales de la INDUSTRIA
+for stock_, _ in market_fundamentals.items():
+    # Solo extraer compañias denominadas en pesos chilenos
+    if market_fundamentals[stock_]['General']['CurrencyCode'] == 'CLP':
+        if market_fundamentals[stock_]['General']['Sector'] == stock_industry:
+            industry_roe.append(market_fundamentals[stock_]['Highlights']['ReturnOnEquityTTM'])
+            industry_pb.append(market_fundamentals[stock_]['Valuation']['PriceBookMRQ'])
+            industry_pe.append(market_fundamentals[stock_]['Valuation']['TrailingPE'])
+            industry_forward_pe.append(market_fundamentals[stock_]['Valuation']['ForwardPE'])
+            industry_ps.append(market_fundamentals[stock_]['Valuation']['PriceSalesTTM'])
+            industry_ev_ebitda.append(market_fundamentals[stock_]['Valuation']['EnterpriseValueEbitda'])
+            industry_yield.append(market_fundamentals[stock_]['Highlights']['DividendYield'])
+            industry_peg.append(market_fundamentals[stock_]['Highlights']['PEGRatio'])
+            industry_op_margin.append(market_fundamentals[stock_]['Highlights']['OperatingMarginTTM'])
+            
         
 precios_indice_mercado = cleaner_macro_valorizacion(indice_mercado).dropna()
 
@@ -215,7 +266,7 @@ ebitda_margin = (ebitda / inc_['totalRevenue']).mean()
 
 #%% Paso 2: Estimar la tasa de costo de capital
 import fredpy as fp
-fp.api_key = '97314157aa982d413b0388ed05758cbb'
+fp.api_key = os.environ['API_FRED']
 
 beta_estadistico = stock_fundamentals['Technicals']['Beta']
 # retornos mensuales anualizados
