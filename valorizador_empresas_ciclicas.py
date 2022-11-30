@@ -489,3 +489,70 @@ ax.text(0.7, -0.12,
          color='black')
 
 plt.show()
+
+#%% Price to book
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.hist(mercado_pb, bins=21, color='dimgray')
+ax.axvline(x=stock_pb, color='navy', linestyle='solid', linewidth=5)
+ax.axvline(x=np.median(mercado_pb), color='gold', linestyle='solid', linewidth=5)
+# Subvalorado
+ax.axvspan(np.min(mercado_pb), np.median(mercado_pb)*0.99, alpha=0.5, color='forestgreen')
+# Sobrevalorado
+ax.axvspan(np.median(mercado_pb)*1.01, np.max(mercado_pb), alpha=0.5, color='darkred')
+
+fig.suptitle("Price to Tangible Book Ratio vs Industry", fontweight='bold')
+plt.title(f"How does {stock[:stock.index('.')]} PB Ratio compare to other companies in the {stock_industry} Industry?")
+ax.set_ylabel('Number of Companies')
+
+ax.text(0.15, -0.12,  
+         "Source: End Of Day Historical data    Chart: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+ax.text(0.7, -0.12,  
+         "Blue = Company PE and Yellow = Industry median", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black')
+
+plt.show()
+
+#%% Trailing Price to Sales
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.hist(industry_ps, bins=21, color='dimgray')
+ax.axvline(x=stock_ps, color='navy', linestyle='solid', linewidth=5)
+ax.axvline(x=np.median(industry_ps), color='gold', linestyle='solid', linewidth=5)
+# Subvalorado
+ax.axvspan(np.min(industry_ps), np.median(industry_ps)*0.99, alpha=0.5, color='forestgreen')
+# Sobrevalorado
+ax.axvspan(np.median(industry_ps)*1.01, np.max(industry_ps), alpha=0.5, color='darkred')
+
+fig.suptitle("Price to Sales Ratio vs Industry", fontweight='bold')
+plt.title(f"How does {stock[:stock.index('.')]} PS Ratio compare to other companies in the {stock_industry} Industry?")
+ax.set_ylabel('Number of Companies')
+
+ax.text(0.15, -0.12,  
+         "Source: End Of Day Historical data    Chart: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+ax.text(0.7, -0.12,  
+         "Blue = Company PE and Yellow = Industry median", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black')
+
+plt.show()
