@@ -455,3 +455,37 @@ elif (precio_mercado_accion >= valor_instrinsico * 0.8) & (precio_mercado_accion
 elif precio_mercado_accion < valor_instrinsico * 0.8:
     print(f"{stock[:stock.index('.')]} ({codigo_moneda}${round(precio_mercado_accion, 2)}) cotiza por DEBAJO de mi estimación de valor justo ({codigo_moneda}${round(valor_instrinsico, 2)})")
 
+#%% Price to Earnings
+
+# Trailing Price to Earnings
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.hist(industry_pe, bins='fd', color='dimgray')
+ax.axvline(x=stock_pe, color='navy', linestyle='solid', linewidth=5)
+ax.axvline(x=np.median(industry_pe), color='gold', linestyle='solid', linewidth=5)
+# Subvalorado
+ax.axvspan(np.min(industry_pe), np.median(industry_pe)*0.99, alpha=0.5, color='forestgreen')
+# Sobrevalorado
+ax.axvspan(np.median(industry_pe)*1.01, np.max(industry_pe), alpha=0.5, color='darkred')
+
+fig.suptitle("Trailing Price to Earnings Ratio vs Industry", fontweight='bold')
+plt.title(f"How does {stock[:stock.index('.')]} PE Ratio compare to other companies in the {stock_industry} Industry?")
+ax.set_ylabel('Number of Companies')
+
+ax.text(0.15, -0.12,  
+         "Source: End Of Day Historical data    Chart: Lautaro Parada", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black',
+         bbox=dict(facecolor='tab:gray', alpha=0.5))
+
+ax.text(0.7, -0.12,  
+         "Blue = Company PE and Yellow = Industry median", 
+         horizontalalignment='center',
+         verticalalignment='center', 
+         transform=ax.transAxes, 
+         fontsize=8, 
+         color='black')
+
+plt.show()
