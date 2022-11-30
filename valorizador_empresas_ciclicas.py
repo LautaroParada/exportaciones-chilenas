@@ -35,7 +35,7 @@ Empresas a valorar en el articulo
 """
 
 # Datos referenciales para todo el script
-stock = 'CMPC.SN'
+stock = 'CCU.SN'
 indice_mercado = 'F013.IBC.IND.N.7.LAC.CL.CLP.BLO.D' # IPSA
 tasa_impuestos = 0.27
 exchange = stock[stock.index('.'):][1:] # extraer el exchange de la accion
@@ -359,10 +359,18 @@ precio_mercado_accion = price_normalizer(
     client.get_prices_eod(stock)
     ).close.iloc[-1]
 
-if value_per_share_clp > precio_mercado_accion:
-    print(f"{stock_fundamentals['General']['Name']} cotiza por DEBAJO de la estimación de valor ({porcentaje_accion(value_per_share_clp, precio_mercado_accion)}%)")
+if stock_fundamentals['Financials']['Income_Statement']['currency_symbol'] == 'USD':
+    if value_per_share_clp > precio_mercado_accion:
+        print(f"{stock_fundamentals['General']['Name']} cotiza por DEBAJO de la estimación de valor ({porcentaje_accion(value_per_share_clp, precio_mercado_accion)}%)")
+    else:
+        print(f"{stock_fundamentals['General']['Name']} cotiza por SOBRE de la estimación de valor ({porcentaje_accion(precio_mercado_accion, value_per_share_clp)}%)")
+
 else:
-    print(f"{stock_fundamentals['General']['Name']} cotiza por SOBRE de la estimación de valor ({porcentaje_accion(precio_mercado_accion, value_per_share_clp)}%)")
+    if value_per_share > precio_mercado_accion:
+        print(f"{stock_fundamentals['General']['Name']} cotiza por DEBAJO de la estimación de valor ({porcentaje_accion(value_per_share, precio_mercado_accion)}%)")
+    else:
+        print(f"{stock_fundamentals['General']['Name']} cotiza por SOBRE de la estimación de valor ({porcentaje_accion(precio_mercado_accion, value_per_share)}%)")
+
 
 #%% Graficos
 import matplotlib.pyplot as plt
