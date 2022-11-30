@@ -273,8 +273,8 @@ beta_estadistico = stock_fundamentals['Technicals']['Beta']
 r_e = float(
     precios_indice_mercado.resample('M').mean().pct_change().dropna().mean().values * 12
     )
-# Bono de gobierno a 10 años - EE.UU.
-r_f_us = float(cleaner_macro_valorizacion('F019.TBG.TAS.10.D').dropna().rolling(window=20).mean().iloc[-1]) / 100
+# Bono de gobierno a 10 años - EE.UU. | Dias de trading 250
+r_f_us = float(cleaner_macro_valorizacion('F019.TBG.TAS.10.D').dropna().rolling(window=250).mean().iloc[-1]) / 100
 # Expectativas de inflación en 11 meses (variación 12 meses, mediana)
 exp_inf_cl = float(cleaner_macro_valorizacion('F089.IPC.V12.14.M').iloc[-1]) / 100
 # 1-Year Expected Inflation -> https://fred.stlouisfed.org/series/EXPINF1YR
@@ -288,13 +288,13 @@ equity_risk_premium = r_e - r_f
 
 cost_of_equity = r_f + beta_estadistico * equity_risk_premium
 
-total_debt = (bs_['shortTermDebt'] + bs_['longTermDebt'] + bs_['shortLongTermDebt'])[-1]
-total_equity_ = stock_fundamentals['Highlights']['MarketCapitalization']
+total_debt = (bs_['shortTermDebt'] + bs_['longTermDebt'])[-1]
+total_equity_ = bs_['totalStockholderEquity'][-1]
 de = total_debt / total_equity_
 
 # Calculado el costo de capital para la firma
 # Spread EMBI Chile (promedio, puntos base)
-spread_chile = float(cleaner_macro_valorizacion('F019.SPS.PBP.91.D').dropna().rolling(window=20).mean().iloc[-1]) / 10000
+spread_chile = float(cleaner_macro_valorizacion('F019.SPS.PBP.91.D').dropna().rolling(window=250).mean().iloc[-1]) / 10000
 cost_of_debt = r_f + spread_chile
 cost_of_capital = cost_of_equity * (1 - de) + cost_of_debt * (1-tasa_impuestos) * de
 
