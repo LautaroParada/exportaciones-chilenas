@@ -331,7 +331,7 @@ try:
     available_shares_ = client.get_fundamental_equity(stock, filter_='SharesStats::SharesOutstanding')
     
     if available_shares > 0 and available_shares_ > 0:
-        available_shares = min(available_shares, available_shares_)
+        available_shares = max(available_shares, available_shares_)
         del available_shares_
 except:
     available_shares = client.get_fundamental_equity(stock, filter_='SharesStats::SharesOutstanding')
@@ -343,14 +343,44 @@ minority_interest = bs_['noncontrollingInterestInConsolidatedEntity'][-1]
 
 value_per_share = (value_op_assets + cash + non_op_assets - total_debt - minority_interest) / available_shares
 
+# Transformando a CLP si es que el balance está en dolares
+if stock_fundamentals['Financials']['Income_Statement']['currency_symbol'] == 'USD':
+    # solicitar datos del tipo de cambio oficial -> Promedio mensual movil
+    usdclp = price_normalizer(
+        client.get_prices_eod('USDCLP.FOREX')
+        ).close.rolling(
+            window=20
+            ).mean()[-1]
+    value_per_share_clp = usdclp * value_per_share
+
 #%% Tests
 
 precio_mercado_accion = price_normalizer(
     client.get_prices_eod(stock)
     ).close.iloc[-1]
 
-if value_per_share > precio_mercado_accion:
-    print(f"{stock_fundamentals['General']['Name']} cotiza por DEBAJO de la estimación de valor ({porcentaje_accion(value_per_share, precio_mercado_accion)}%)")
+if value_per_share_clp > precio_mercado_accion:
+    print(f"{stock_fundamentals['General']['Name']} cotiza por DEBAJO de la estimación de valor ({porcentaje_accion(value_per_share_clp, precio_mercado_accion)}%)")
 else:
-    print(f"{stock_fundamentals['General']['Name']} cotiza por SOBRE de la estimación de valor ({porcentaje_accion(precio_mercado_accion, value_per_share)}%)")
+    print(f"{stock_fundamentals['General']['Name']} cotiza por SOBRE de la estimación de valor ({porcentaje_accion(precio_mercado_accion, value_per_share_clp)}%)")
 
+#%% Graficos
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
+# Grafico del DCF
+# Extraer la moneda de la accion
+nombre_moneda = client.get_fundamental_equity(stock, filter_='General::CurrencyName')
+codigo_moneda = client.get_fundamental_equity(stock, filter_='General::CurrencyCode')
+
+# ratings de Wall Street
+try:
+    wall_street_price = stock_fundamentals['Highlights']['WallStreetTargetPrice']
+except:
+    wall_street_price = 0
+    
+# Analistas
+try:
+    analyst_target = stock_fundamentals['AnalystRatings']['TargetPrice']
+except:
+    analyst_target = 0
