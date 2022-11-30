@@ -399,7 +399,7 @@ except:
     
 # Grafico de valorización y analisis de sensibilidad
 fig, ax = plt.subplots(figsize=(10, 5))
-estados = ('Current\nprice', 'Intrinsic\nValue', 'Wall Street\nprice', 'Analysts\ntarget')
+estados = ('Precio\nactual', 'Valor\nIntrínseco', 'Wall\nStreet', 'Objetivo\nAnalistas')
 y_pos = np.arange(len(estados))
 precios = np.array([precio_mercado_accion, valor_instrinsico, wall_street_price, analyst_target])
 
@@ -408,8 +408,8 @@ ax.set_yticks(y_pos, labels=estados)
 ax.invert_yaxis()  # labels read top-to-bottom
 ax.set_xlabel(f"{nombre_moneda} ({codigo_moneda})")
 
-fig.suptitle('Current price vs intrinsic value', fontweight='bold')
-plt.title(f"What is the intrinsic value of {stock[:stock.index('.')]} when looking at its future cash flows?")
+fig.suptitle('Precio actual vs Valor Intrínseco', fontweight='bold')
+plt.title(f"¿Cuál es el valor intrínseco de {stock[:stock.index('.')]} al observar sus flujos de caja futuros?")
 
 # Rangos de sensibilidad
 # antes se evalua cual precio es mayor para el limite superior
@@ -429,7 +429,7 @@ ax.axvspan(valor_instrinsico*1.2, precio_mayor*1.4, alpha=0.5, color='darkred')
 
 # Graph source
 ax.text(0.15, -0.12,  
-         "Source: EOD Historical Data   Chart: Lautaro Parada", 
+         "Fuente: EOD Historical Data   Gráfico: Lautaro Parada", 
          horizontalalignment='center',
          verticalalignment='center', 
          transform=ax.transAxes, 
@@ -438,7 +438,7 @@ ax.text(0.15, -0.12,
          bbox=dict(facecolor='tab:gray', alpha=0.5))
 
 ax.text(0.8, -0.12,  
-         "Methodology: Free cash flow to equity valuation model.", 
+         "Metologia: DCF por Aswath Damodaran", 
          horizontalalignment='center',
          verticalalignment='center', 
          transform=ax.transAxes, 
@@ -459,7 +459,7 @@ elif precio_mercado_accion < valor_instrinsico * 0.8:
 
 # Trailing Price to Earnings
 fig, ax = plt.subplots(figsize=(10, 5))
-ax.hist(industry_pe, bins='fd', color='dimgray')
+ax.hist(industry_pe, bins=21, color='dimgray')
 ax.axvline(x=stock_pe, color='navy', linestyle='solid', linewidth=5)
 ax.axvline(x=np.median(industry_pe), color='gold', linestyle='solid', linewidth=5)
 # Subvalorado
@@ -467,12 +467,12 @@ ax.axvspan(np.min(industry_pe), np.median(industry_pe)*0.99, alpha=0.5, color='f
 # Sobrevalorado
 ax.axvspan(np.median(industry_pe)*1.01, np.max(industry_pe), alpha=0.5, color='darkred')
 
-fig.suptitle("Trailing Price to Earnings Ratio vs Industry", fontweight='bold')
-plt.title(f"How does {stock[:stock.index('.')]} PE Ratio compare to other companies in the {stock_industry} Industry?")
-ax.set_ylabel('Number of Companies')
+fig.suptitle("Relación precio-beneficio (PE) vs el Sector", fontweight='bold')
+plt.title(f"¿Cómo se compara el PE de {stock[:stock.index('.')]} vs con otras empresas del sector {stock_industry}?")
+ax.set_ylabel('Número de compañias')
 
 ax.text(0.15, -0.12,  
-         "Source: End Of Day Historical data    Chart: Lautaro Parada", 
+         "Fuente: End Of Day Historical data    Gráfico: Lautaro Parada", 
          horizontalalignment='center',
          verticalalignment='center', 
          transform=ax.transAxes, 
@@ -481,7 +481,7 @@ ax.text(0.15, -0.12,
          bbox=dict(facecolor='tab:gray', alpha=0.5))
 
 ax.text(0.7, -0.12,  
-         "Blue = Company PE and Yellow = Industry median", 
+         "Azul = PE Compañia | Amarillo = Mediana sector", 
          horizontalalignment='center',
          verticalalignment='center', 
          transform=ax.transAxes, 
@@ -501,12 +501,12 @@ ax.axvspan(np.min(mercado_pb), np.median(mercado_pb)*0.99, alpha=0.5, color='for
 # Sobrevalorado
 ax.axvspan(np.median(mercado_pb)*1.01, np.max(mercado_pb), alpha=0.5, color='darkred')
 
-fig.suptitle("Price to Tangible Book Ratio vs Industry", fontweight='bold')
-plt.title(f"How does {stock[:stock.index('.')]} PB Ratio compare to other companies in the {stock_industry} Industry?")
-ax.set_ylabel('Number of Companies')
+fig.suptitle("Relación precio-valor contable (PB) vs el Sector ", fontweight='bold')
+plt.title(f"¿Cómo se compara el PB de {stock[:stock.index('.')]} vs con otras empresas del sector {stock_industry}?")
+ax.set_ylabel('Número de compañias')
 
 ax.text(0.15, -0.12,  
-         "Source: End Of Day Historical data    Chart: Lautaro Parada", 
+         "Fuente: End Of Day Historical data    Gráfico: Lautaro Parada", 
          horizontalalignment='center',
          verticalalignment='center', 
          transform=ax.transAxes, 
@@ -515,7 +515,7 @@ ax.text(0.15, -0.12,
          bbox=dict(facecolor='tab:gray', alpha=0.5))
 
 ax.text(0.7, -0.12,  
-         "Blue = Company PE and Yellow = Industry median", 
+         "Azul = PE Compañia | Amarillo = Mediana sector", 
          horizontalalignment='center',
          verticalalignment='center', 
          transform=ax.transAxes, 
@@ -534,12 +534,12 @@ ax.axvspan(np.min(industry_ps), np.median(industry_ps)*0.99, alpha=0.5, color='f
 # Sobrevalorado
 ax.axvspan(np.median(industry_ps)*1.01, np.max(industry_ps), alpha=0.5, color='darkred')
 
-fig.suptitle("Price to Sales Ratio vs Industry", fontweight='bold')
-plt.title(f"How does {stock[:stock.index('.')]} PS Ratio compare to other companies in the {stock_industry} Industry?")
-ax.set_ylabel('Number of Companies')
+fig.suptitle("Relación precio/ventas (PS) vs el Sector", fontweight='bold')
+plt.title(f"¿Cómo se compara el PS de {stock[:stock.index('.')]} vs con otras empresas del sector {stock_industry}?")
+ax.set_ylabel('Número de compañias')
 
 ax.text(0.15, -0.12,  
-         "Source: End Of Day Historical data    Chart: Lautaro Parada", 
+         "Fuente: End Of Day Historical data    Gráfico: Lautaro Parada", 
          horizontalalignment='center',
          verticalalignment='center', 
          transform=ax.transAxes, 
@@ -548,7 +548,7 @@ ax.text(0.15, -0.12,
          bbox=dict(facecolor='tab:gray', alpha=0.5))
 
 ax.text(0.7, -0.12,  
-         "Blue = Company PE and Yellow = Industry median", 
+         "Azul = PE Compañia | Amarillo = Mediana sector", 
          horizontalalignment='center',
          verticalalignment='center', 
          transform=ax.transAxes, 
@@ -572,7 +572,7 @@ def rot_text(ang):
     rotation = np.degrees(np.radians(ang) * np.pi / np.pi - np.radians(90))
     return rotation
 
-def gauge(labels=['LOW','MEDIUM','HIGH','VERY HIGH','EXTREME'], \
+def gauge(labels=['BAJO','MEDIO','ALTO','MUY ALTO','EXTREMO'], \
           colors='jet_r', arrow=1, title='', fname=False): 
     
     """
@@ -672,7 +672,7 @@ def gauge(labels=['LOW','MEDIUM','HIGH','VERY HIGH','EXTREME'], \
     
     # Graph source
     ax.text(0.3, 0.03,  
-             "Source: End Of Day Historical data    Chart: Lautaro Parada", 
+             "Fuente: End Of Day Historical data    Gráfico: Lautaro Parada", 
              horizontalalignment='center',
              verticalalignment='center', 
              transform=ax.transAxes, 
@@ -695,8 +695,8 @@ try:
     elif peg >= 1.5:
         arrow_ = 4
     # graficar 
-    gauge(labels=['LOW','MEDIUM','HIGH','EXTREME'], \
-      colors=['#007A00','#0063BF','#FFCC00','#ED1C24'], arrow=arrow_, title=f"PEG Ratio for {stock[:stock.index('.')]}") 
+    gauge(labels=['BAJO','MEDIO','ALTO','EXTREMO'], \
+      colors=['#007A00','#0063BF','#FFCC00','#ED1C24'], arrow=arrow_, title=f"Ratio PEG para {stock[:stock.index('.')]}") 
 
 except:
     print("No se pudo calcular el PEG")
